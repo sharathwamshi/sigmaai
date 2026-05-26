@@ -1,0 +1,51 @@
+[
+  {
+    "user_id": 8632800569,
+    "user_info": {
+      "id": 8632800569,
+      "name": "Sharath Wamshi",
+      "username": "",
+      "lang": "en"
+    },
+    "started_at": "2026-05-13T03:52:58.627559+00:00",
+    "updated_at": "2026-05-16T06:45:17.354424+00:00",
+    "history": [
+      {
+        "ts": "2026-05-16T06:43:36.068278+00:00",
+        "text": "/start"
+      },
+      {
+        "ts": "2026-05-16T06:43:51.298625+00:00",
+        "text": "cb:onboard:purpose:sales"
+      },
+      {
+        "ts": "2026-05-16T06:43:58.288430+00:00",
+        "text": "cb:onboard:sales_need:products_prices"
+      },
+      {
+        "ts": "2026-05-16T06:44:08.940326+00:00",
+        "text": "cb:onboard_complete"
+      },
+      {
+        "ts": "2026-05-16T06:44:12.114236+00:00",
+        "text": "cb:cat:Still Lenses"
+      },
+      {
+        "ts": "2026-05-16T06:44:20.600455+00:00",
+        "text": "cb:menu:main"
+      },
+      {
+        "ts": "2026-05-16T06:44:41.794314+00:00",
+        "text": "Hi"
+      },
+      {
+        "ts": "2026-05-16T06:44:59.019272+00:00",
+        "text": "/start"
+      },
+      {
+        "ts": "2026-05-16T06:45:17.342687+00:00",
+        "text": "cb:onboard:purpose:services"
+      }
+    ]
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "session_id": "0e01ef72-ef85-49f4-b739-cda7095b1fe5",
+    "name": "testing 1",
+    "phone": "1111111111",
+    "captured_at": "2026-05-05T07:25:18.734488",
+    "message_count": 4
+  },
+  {
+    "session_id": "0e01ef72-ef85-49f4-b739-cda7095b1fe5",
+    "name": "sharath",
+    "phone": "9880248552",
+    "captured_at": "2026-05-06T12:25:09.246848",
+    "message_count": 6
+  },
+  {
+    "session_id": "35cd25d4-446e-41c5-b4e6-cf8eb5231df3",
+    "name": "testing 2",
+    "phone": "9999999999",
+    "captured_at": "2026-05-06T12:41:11.770217",
+    "message_count": 3
+  },
+  {
+    "session_id": "35cd25d4-446e-41c5-b4e6-cf8eb5231df3",
+    "name": "sharath9",
+    "phone": "9999999999",
+    "captured_at": "2026-05-07T19:13:11.559841",
+    "message_count": 3
+  },
+  {
+    "session_id": "cf4605ce-48d9-4f22-8bb7-316833da3b6b",
+    "name": "sharath10",
+    "phone": "9999999999",
+    "captured_at": "2026-05-07T19:17:46.122728",
+    "message_count": 3
+  },
+  {
+    "session_id": "8fac6aef-c05d-4911-97f1-49efc7d6a733",
+    "name": "sharath11",
+    "phone": "9999999999",
+    "captured_at": "2026-05-07T19:22:05.968131",
+    "message_count": 3
+  },
+  {
+    "session_id": "96d8bea9-2ec8-4d2f-af15-5cc3adcf2c9d",
+    "name": "sharath12",
+    "phone": "9886999711",
+    "captured_at": "2026-05-07T19:27:21.430849",
+    "message_count": 4
+  },
+  {
+    "session_id": "c59ea1ca-56b2-4af8-a2bb-9a5909dc7004",
+    "name": "sharath",
+    "phone": "9999999999",
+    "captured_at": "2026-05-08T11:59:19.276918",
+    "message_count": 1
+  }
+]

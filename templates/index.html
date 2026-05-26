@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sigma AI Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #efefec;    /* warm grey — exact reference bg */
+  --bg-card:  #f7f7f4;    /* lighter warm off-white for cards */
+  --bg-white: #ffffff;
+  --border:   #d8d8d4;
+  --border-btn: #c0c0bc;
+  --text-hero: #1a1a18;
+  --text-body: #4a4a46;
+  --text-sub:  #8a8a84;
+  --text-label:#7a7a74;
+  --black:     #111110;
+  --green:     #4a8c4a;
+
+  --font-serif: 'EB Garamond', 'Cormorant Garamond', Georgia, serif;
+  --font-body:  'Lato', -apple-system, sans-serif;
+  --max-w: 760px;
+  --header-h: 62px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── APP SHELL ─────────────────────────────────── */
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ── HEADER ────────────────────────────────────── */
+.header {
+  height: var(--header-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; flex-shrink: 0; z-index: 20;
+}
+.header-left {
+  display: flex; align-items: center; gap: 18px;
+}
+/* Sigma wordmark — spaced caps, serif */
+.sigma-wordmark {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  color: var(--black);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.header-sep { width: 1px; height: 22px; background: var(--border); }
+.header-badge {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-body);
+  letter-spacing: .03em;
+}
+.header-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+.header-badge-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--green); text-transform: uppercase; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+.hbtn {
+  width: 34px; height: 34px;
+  background: transparent; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-sub); transition: color .15s;
+  border-radius: 6px;
+}
+.hbtn:hover { color: var(--black); background: rgba(0,0,0,.04); }
+
+/* ── MESSAGES SCROLL ────────────────────────────── */
+.messages {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  background: var(--bg);
+}
+.messages::-webkit-scrollbar { width: 5px; }
+.messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+.messages-inner {
+  max-width: var(--max-w); margin: 0 auto;
+  padding: 0 24px 32px;
+}
+
+/* ── WELCOME SCREEN ─────────────────────────────── */
+.welcome { padding-top: 20px; animation: fade-up .5s ease; }
+
+.pursuit-label {
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 400;
+  letter-spacing: .25em;
+  color: var(--text-label);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.hero-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(34px, 6vw, 52px);
+  font-weight: 400;
+  color: var(--text-hero);
+  line-height: 1.1;
+  text-align: center;
+  letter-spacing: -.01em;
+  margin-bottom: 12px;
+}
+
+.hero-sub {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.65;
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+
+/* ── DIVIDER ────────────────────────────────────── */
+.section-divider {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 18px;
+}
+.section-divider::before,
+.section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.section-divider-label {
+  font-family: var(--font-body);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .25em;
+  color: var(--text-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── TOPIC CHIPS ────────────────────────────────── */
+.topics {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; margin-bottom: 24px;
+}
+.topic-btn {
+  padding: 11px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-btn);
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-body);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
+  white-space: nowrap;
+  letter-spacing: .01em;
+}
+.topic-btn:hover {
+  background: var(--bg-white);
+  border-color: var(--black);
+  color: var(--black);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+/* ── ASSISTANT CARD ─────────────────────────────── */
+.assistant-section-label {
+  font-family: var(--font-body);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .2em; color: var(--text-label);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.assistant-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 22px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  font-weight: 300;
+  color: var(--text-body);
+  line-height: 1.7;
+  animation: fade-up .5s .1s both ease;
+}
+
+/* ── CHAT MESSAGES ──────────────────────────────── */
+.msg-row {
+  display: flex; gap: 12px; margin-bottom: 24px;
+  animation: fade-up .25s ease;
+}
+.msg-row.user { flex-direction: row-reverse; }
+
+.av {
+  width: 28px; height: 28px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 3px; font-size: 11px; font-weight: 700;
+}
+.av-bot { background: var(--black); color: #fff; font-family: var(--font-body); letter-spacing: .1em; font-size: 9px; font-weight: 700; }
+.av-user { background: var(--border); color: var(--text-body); }
+
+.msg-body { flex: 1; min-width: 0; }
+.msg-row.user .msg-body { display: flex; flex-direction: column; align-items: flex-end; }
+
+.bubble { border-radius: 4px; padding: 11px 15px; font-size: 14px; line-height: 1.65; }
+.bubble.user { background: var(--black); color: #fff; max-width: 80%; border-bottom-right-radius: 1px; }
+.bubble.bot { background: transparent; padding: 3px 0; max-width: 100%; color: var(--text-body); }
+.bubble.bot p { margin-bottom: 8px; }
+.bubble.bot p:last-child { margin-bottom: 0; }
+.bubble.bot strong { color: var(--text-hero); }
+
+.msg-time {
+  font-size: 10px; color: var(--text-sub);
+  margin-top: 5px; display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-body); font-weight: 300; letter-spacing: .02em;
+}
+.msg-row.user .msg-time { justify-content: flex-end; }
+
+/* ── THINKING ───────────────────────────────────── */
+.thinking-row {
+  display: flex; gap: 12px; margin-bottom: 24px;
+  animation: fade-up .25s ease;
+}
+.thinking-body {
+  flex: 1; padding: 4px 0;
+  display: flex; align-items: center; gap: 12px;
+}
+.wave { display: flex; align-items: center; gap: 3px; height: 18px; }
+.w-bar {
+  width: 3px; border-radius: 2px; background: var(--black);
+  animation: wave-anim 1.1s ease-in-out infinite;
+}
+.w-bar:nth-child(1){height:5px;animation-delay:.00s}
+.w-bar:nth-child(2){height:12px;animation-delay:.10s}
+.w-bar:nth-child(3){height:8px;animation-delay:.20s}
+.w-bar:nth-child(4){height:15px;animation-delay:.30s}
+.w-bar:nth-child(5){height:7px;animation-delay:.40s}
+.w-bar:nth-child(6){height:11px;animation-delay:.50s}
+@keyframes wave-anim{0%,100%{transform:scaleY(.4);opacity:.2}50%{transform:scaleY(1.2);opacity:1}}
+.thinking-label {
+  font-size: 13px; color: var(--text-sub);
+  font-family: var(--font-body); font-weight: 300; letter-spacing: .02em;
+}
+.thinking-dots span { display: inline-block; animation: dot-anim 1.4s infinite; }
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot-anim{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+/* ── INPUT AREA ─────────────────────────────────── */
+.input-area {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 8px 24px 10px;
+}
+.input-hint-top {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 300;
+  color: var(--text-sub);
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+.input-wrap { max-width: var(--max-w); margin: 0 auto; }
+.input-box {
+  display: flex; align-items: flex-end;
+  background: var(--bg-card);
+  border: 1px solid var(--border-btn);
+  border-radius: 4px;
+  padding: 9px 12px;
+  transition: border-color .18s, box-shadow .18s;
+}
+.input-box:focus-within {
+  border-color: var(--black);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.06);
+}
+#user-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: var(--font-body); font-size: 14px; font-weight: 300;
+  color: var(--text-hero); resize: none;
+  line-height: 1.5; max-height: 160px; min-height: 22px;
+  letter-spacing: .01em;
+}
+#user-input::placeholder { color: var(--text-sub); }
+.btn-send {
+  width: 36px; height: 36px;
+  background: var(--black); border: none; border-radius: 3px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0; margin-left: 10px;
+  transition: background .14s, transform .1s;
+}
+.btn-send:hover { background: #2a2a28; }
+.btn-send:active { transform: scale(.95); }
+.btn-send:disabled { background: var(--border); cursor: not-allowed; color: var(--text-sub); }
+
+.input-footer {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 10.5px; font-weight: 300;
+  color: var(--text-sub); letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* ── PRODUCTS / PRICES / DEALERS ─────────────────── */
+.section-label-msg {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  color: var(--text-label); text-transform: uppercase;
+  margin: 14px 0 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label-msg::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 10px; margin-bottom: 4px; }
+.pcard {
+  background: var(--bg-white); border: 1px solid var(--border); border-radius: 4px;
+  overflow: hidden; transition: box-shadow .18s, transform .18s;
+}
+.pcard:hover { box-shadow: 0 6px 20px rgba(0,0,0,.09); transform: translateY(-2px); }
+.pcard-img {
+  width: 100%; height: 130px; background: #f5f5f2;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; border-bottom: 1px solid var(--border);
+}
+.pcard-img img { width: 100%; height: 100%; object-fit: contain; transition: transform .3s; padding: 8px; }
+.pcard:hover .pcard-img img { transform: scale(1.04); }
+.line-badge {
+  position: absolute; top: 8px; left: 8px;
+  padding: 2px 8px; border-radius: 3px;
+  font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--black); color: #fff;
+}
+.pcard-body { padding: 12px 13px 13px; }
+.pcard-name { font-size: 12.5px; font-weight: 700; color: var(--text-hero); line-height: 1.3; margin-bottom: 3px; }
+.pcard-cat { font-size: 11px; color: var(--text-sub); margin-bottom: 7px; }
+.pcard-reason { font-size: 11.5px; color: var(--text-body); line-height: 1.4; margin-bottom: 8px; font-style: italic; }
+.pcard-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; padding-top: 9px; border-top: 1px solid var(--border);
+}
+.pcard-price { font-size: 12.5px; font-weight: 700; color: var(--green); }
+.btn-view {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 700; color: var(--text-hero);
+  text-decoration: none; padding: 5px 10px;
+  background: var(--bg); border: 1px solid var(--border-btn);
+  border-radius: 3px; transition: all .15s; white-space: nowrap;
+}
+.btn-view:hover { background: var(--black); color: #fff; border-color: var(--black); }
+
+/* price / dealer sections inherited from original - kept compatible */
+.price-section {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 4px; overflow: hidden; margin: 10px 0;
+}
+.dealer-section {
+  background: #faf5ff; border: 1px solid #ddd6fe;
+  border-radius: 4px; overflow: hidden; margin: 10px 0;
+}
+.acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; cursor: pointer; user-select: none;
+}
+.acc-header-left {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 700;
+}
+.acc-header.price-hdr .acc-header-left { color: #16a34a; }
+.acc-header.dealer-hdr .acc-header-left { color: #7c3aed; }
+.acc-chevron { transition: transform .2s; }
+.acc-chevron.open { transform: rotate(180deg); }
+.price-body, .dealer-body { padding: 2px 14px 12px; }
+.price-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,.05); gap: 8px; flex-wrap: wrap;
+}
+.price-row:last-child { border-bottom: none; }
+.price-platform { display: flex; align-items: center; gap: 7px; }
+.price-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+.price-name { font-size: 13px; font-weight: 600; color: var(--text-hero); }
+.price-right { display: flex; align-items: center; gap: 8px; }
+.price-val { font-size: 13.5px; font-weight: 700; color: #16a34a; }
+.price-status { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; background: #dcfce7; color: #16a34a; font-weight: 500; white-space: nowrap; }
+.price-link { font-size: 12px; font-weight: 600; color: var(--black); text-decoration: none; }
+.price-link:hover { text-decoration: underline; }
+.dealer-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,.05); }
+.dealer-row:last-child { border-bottom: none; }
+.dealer-icon { width: 32px; height: 32px; background: #ede9fe; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.dealer-info { flex: 1; }
+.dealer-name { font-size: 12.5px; font-weight: 700; color: var(--text-hero); }
+.dealer-sub { font-size: 11px; color: var(--text-sub); }
+.dealer-link { font-size: 12px; font-weight: 600; color: #7c3aed; text-decoration: none; white-space: nowrap; }
+.dealer-link:hover { text-decoration: underline; }
+.collapsible { display: none; }
+.collapsible.open { display: block; }
+
+@keyframes fade-up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── RESPONSIVE ─────────────────────────────────── */
+@media(max-width:600px) {
+  .header { padding: 0 16px; }
+  .messages-inner { padding: 0 16px 28px; }
+  .input-area { padding: 12px 16px 16px; }
+  .welcome { padding-top: 28px; }
+  .hero-headline { font-size: 34px; }
+  .topics { gap: 8px; }
+  .topic-btn { padding: 10px 16px; font-size: 13px; }
+  .products-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── HEADER ────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <!-- <img src="/static/logo.png" alt="Sigma" style="height:36px;width:auto;display:block;object-fit:contain;" onerror="this.style.display='none'"/> -->
+    <a class="sigma-wordmark" href="https://sigmaindia.in/" target="_blank">SIGMA</a>
+    <div class="header-sep"></div>
+    <div class="header-badge">
+      AI Assistant
+      <div class="header-badge-dot"></div>
+      <span class="header-badge-label">ONLINE</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <!-- User icon (hidden for now)
+    <button class="hbtn" title="Account" onclick="void(0)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </button>
+    -->
+    <!-- New conversation -->
+    <button class="hbtn" title="New conversation" onclick="resetChat()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ── MESSAGES ──────────────────────── -->
+<div class="messages" id="messages">
+  <div class="messages-inner" id="messages-inner">
+
+    <!-- WELCOME -->
+    <div class="welcome" id="welcome-screen">
+      <p class="pursuit-label">Pursuit of Perfection</p>
+      <h1 class="hero-headline">How can I assist you today?</h1>
+      <p class="hero-sub">Ask about lenses, cameras, dealers, or the loyalty programme. I'm here to help.</p>
+
+      <div class="section-divider">
+        <span class="section-divider-label">Quick Topics</span>
+      </div>
+
+      <div class="topics">
+        <button class="topic-btn" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">Wedding photography</button>
+        <button class="topic-btn" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">Video / Vlog</button>
+        <button class="topic-btn" onclick="sendMessage('Compact travel zoom lens for mirrorless')">Travel zoom</button>
+        <button class="topic-btn" onclick="sendMessage('Sigma macro lens for product photography')">Macro lens</button>
+        <button class="topic-btn" onclick="sendMessage('Show me authorised Sigma dealers near me')">Find a dealer</button>
+        <button class="topic-btn" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">Loyalty program</button>
+      </div>
+
+      <!-- Assistant welcome card -->
+      <div class="assistant-section-label">Sigma Assistant</div>
+      <div class="assistant-card" id="welcome-main-msg">
+        Welcome to Sigma India. I can help you find the perfect lens or camera for your creative vision — whether you're shooting weddings, wildlife, or cinematic video. What are you working on?
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── INPUT AREA ────────────────────── -->
+<div class="input-area">
+  <div class="input-hint-top">Verify prices with authorised dealers before purchase</div>
+  <div class="input-wrap">
+    <div class="input-box">
+      <textarea id="user-input"
+        placeholder="Ask me anything about Sigma…"
+        rows="1"></textarea>
+      <button class="btn-send" id="send-btn" onclick="submitMessage()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="input-footer">sigmaindia.in</div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ── LEAD CAPTURE MODAL ─────────────── -->
+<div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+  <div style="background:#fff;border-radius:6px;padding:28px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:fade-up .25s ease;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:36px;height:36px;background:var(--black);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:var(--black)">Stay Connected</div>
+        <div style="font-size:11.5px;color:var(--text-sub)">Sigma India · sigmaindia.in</div>
+      </div>
+      <button onclick="dismissLead()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;color:#bbb;font-size:22px;line-height:1;padding:0">&#215;</button>
+    </div>
+    <p id="lead-prompt-text" style="font-size:13.5px;color:var(--text-body);line-height:1.6;margin:14px 0">May I have your name and phone number so our team can assist you better?</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:11.5px;font-weight:700;color:var(--text-body);display:block;margin-bottom:4px">Your Name</label>
+        <input id="lead-name" type="text" placeholder="Enter your name" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:4px;font-size:13.5px;font-family:inherit;outline:none;background:var(--bg);transition:border-color .15s" onfocus="this.style.borderColor='var(--black)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+      <div>
+        <label style="font-size:11.5px;font-weight:700;color:var(--text-body);display:block;margin-bottom:4px">Phone Number</label>
+        <input id="lead-phone" type="tel" placeholder="+91 XXXXX XXXXX" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:4px;font-size:13.5px;font-family:inherit;outline:none;background:var(--bg);transition:border-color .15s" onfocus="this.style.borderColor='var(--black)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="submitLead()" style="flex:1;padding:10px;background:var(--black);color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Submit</button>
+      <button onclick="dismissLead()" style="padding:10px 18px;background:var(--bg);color:var(--text-body);border:1px solid var(--border);border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Skip</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   SIGMA AI ASSISTANT — Frontend JS
+   ═══════════════════════════════════════════════════ */
+
+let LEAD_CFG = { collect: false, gap: 3, prompt: '' };
+let userMsgCount = 0;
+let leadCaptured = false;
+let leadDismissed = false;
+
+// Load config on startup
+fetch('/config-public').then(r=>r.json()).then(cfg=>{
+  if (cfg.brand_name) {
+    document.title = cfg.brand_name + ' AI Assistant';
+  }
+  const mainMsg = document.getElementById('welcome-main-msg');
+  if (mainMsg && cfg.welcome_message && cfg.welcome_message.trim()) {
+    mainMsg.textContent = cfg.welcome_message.trim();
+  }
+  if (cfg.offer_banner && cfg.offer_banner.trim()) {
+    const ob = document.createElement('div');
+    ob.style.cssText = 'background:var(--black);color:#fff;text-align:center;font-size:12.5px;font-weight:500;padding:7px 20px;flex-shrink:0;';
+    ob.textContent = cfg.offer_banner;
+    document.querySelector('.app').insertBefore(ob, document.querySelector('.messages'));
+  }
+  LEAD_CFG.collect = !!cfg.collect_user_data;
+  LEAD_CFG.gap     = parseInt(cfg.user_data_message_gap) || 3;
+  LEAD_CFG.prompt  = cfg.collect_user_prompt || 'May I have your name and phone number so our team can assist you better?';
+  document.getElementById('lead-prompt-text').textContent = LEAD_CFG.prompt;
+}).catch(()=>{});
+
+// Textarea auto-resize
+const ta = document.getElementById('user-input');
+ta.addEventListener('input', function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,160)+'px';
+});
+ta.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitMessage();}
+});
+
+function submitMessage(){
+  const v=ta.value.trim(); if(!v)return;
+  ta.value=''; ta.style.height='auto';
+  sendMessage(v);
+}
+
+function sendMessage(msg){
+  hideWelcome();
+  addUserMsg(msg); showThinking(); setBusy(true);
+  userMsgCount++;
+  fetch('/chat',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:msg})
+  }).then(r=>r.json()).then(d=>{
+    removeThinking(); addBotMsg(d); setBusy(false);
+    if(LEAD_CFG.collect&&!leadCaptured&&!leadDismissed&&userMsgCount>0&&userMsgCount%LEAD_CFG.gap===0){
+      setTimeout(()=>showLeadModal(),900);
+    }
+  }).catch(()=>{
+    removeThinking();
+    addBotMsg({text:"Sorry, something went wrong. Please try again.",products:[],prices:[],dealers:[]});
+    setBusy(false);
+  });
+}
+
+function showLeadModal(){
+  const m=document.getElementById('lead-modal');
+  m.style.display='flex';
+  setTimeout(()=>document.getElementById('lead-name').focus(),100);
+}
+function dismissLead(){ document.getElementById('lead-modal').style.display='none'; leadDismissed=true; }
+function submitLead(){
+  const name=document.getElementById('lead-name').value.trim();
+  const phone=document.getElementById('lead-phone').value.trim();
+  if(!name&&!phone){dismissLead();return;}
+  fetch('/save-lead',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,phone})
+  }).then(()=>{
+    leadCaptured=true;
+    document.getElementById('lead-modal').style.display='none';
+    addBotMsgSimple('Thank you'+(name?' '+name:'')+'! Our team will reach out to you shortly. Sigma India Loyalty Program: Register at sigmaindia.in for extended 3-year warranty. Gold members get 5% off next purchase.');
+  }).catch(()=>dismissLead());
+}
+
+function hideWelcome(){
+  const w=document.getElementById('welcome-screen');
+  if(w) w.style.display='none';
+}
+function setBusy(b){
+  document.getElementById('send-btn').disabled=b;
+  ta.disabled=b;
+}
+function scrollBottom(){
+  const el=document.getElementById('messages');
+  setTimeout(()=>el.scrollTop=el.scrollHeight,80);
+}
+function nowTime(){
+  return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function avBot(){
+  return `<div class="av av-bot" style="font-size:9px;letter-spacing:.08em">Σ</div>`;
+}
+
+function addUserMsg(text){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div');
+  row.className='msg-row user';
+  row.innerHTML=`<div class="av av-user">U</div>
+  <div class="msg-body">
+    <div class="bubble user">${esc(text)}</div>
+    <div class="msg-time">${nowTime()}</div>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+
+function showThinking(){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div');
+  row.className='thinking-row'; row.id='thinking-row';
+  row.innerHTML=`${avBot()}
+  <div class="thinking-body">
+    <div class="wave">
+      <div class="w-bar"></div><div class="w-bar"></div>
+      <div class="w-bar"></div><div class="w-bar"></div>
+      <div class="w-bar"></div><div class="w-bar"></div>
+    </div>
+    <span class="thinking-label">Searching Sigma catalogue<span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span></span>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+function removeThinking(){ const t=document.getElementById('thinking-row'); if(t)t.remove(); }
+
+function addBotMsgSimple(text){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  row.innerHTML=`${avBot()}
+  <div class="msg-body">
+    <div class="bubble bot"><p>${esc(text)}</p></div>
+    <div class="msg-time">${nowTime()} · Sigma Assistant</div>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+
+function addBotMsg(data){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  let html='';
+  if(data.products&&data.products.length){
+    html+=`<div class="section-label-msg">Products</div>`;
+    html+=buildGrid(data.products);
+  }
+  if(data.text){
+    let formatted=fmtText(data.text);
+    // Fix escaped HTML
+    formatted=formatted.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"');
+    // Fix malformed hrefs
+    formatted=formatted.replace(/href\s*=\s*(['"]+)(https?:\/\/[^'"]+)\1+/gi,'href="$2"');
+    formatted=formatted.replace(/"\s+target=/gi,'" target=');
+    html+=`<div class="bubble bot">${formatted}</div>`;
+  }
+  if(data.prices&&data.prices.length) html+=buildPrices(data.prices);
+  if(data.dealers&&data.dealers.length) html+=buildDealers(data.dealers);
+  if(data.service_centers&&data.service_centers.length) html+=buildServiceCenters(data.service_centers);
+  row.innerHTML=`${avBot()}
+  <div class="msg-body">
+    ${html}
+    <div class="msg-time">${nowTime()} · Sigma Assistant</div>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+
+function buildGrid(products){
+  const cards=products.map(p=>{
+    const hasRealImg=p._image&&p._image.trim()!=='';
+    const imgTag=hasRealImg
+      ?`<img src="${esc(p._image)}?t=${Date.now()}" alt="${esc(p.name||'')}"/>`
+      :`<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="22" stroke="#d8d8d4" stroke-width="2"/><circle cx="30" cy="30" r="13" stroke="#d8d8d4" stroke-width="1.5"/><circle cx="30" cy="30" r="5" fill="#e8e8e4"/></svg>`;
+    const price=p.price_inr||p.price_range_inr||'';
+    const hasAmz=p.amazon_in&&p.amazon_in!=='null'&&p.amazon_in!=='None'&&p.amazon_in!=='';
+    return `<div class="pcard">
+      <div class="pcard-img">
+        ${imgTag}
+        <span class="line-badge">${esc(p.line||p.category||'')}</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-name">${esc(p.name||'')}</div>
+        <div class="pcard-cat">${esc(p.category||'')}</div>
+        ${p.reason?`<div class="pcard-reason">${esc(p.reason)}</div>`:''}
+        <div class="pcard-footer">
+          <span class="pcard-price">${price?'₹'+esc(price):''}</span>
+          <div style="display:flex;gap:5px">
+            ${p.url?`<a href="https://sigmaindia.in/dealer-network/" target="_blank" class="btn-view">Dealer ↗</a>`:''}
+            ${hasAmz?`<a href="${esc(p.amazon_in)}" target="_blank" class="btn-view" style="color:#c45500;border-color:#fed7aa;background:#fff7ed">Amazon ↗</a>`:''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="products-grid">${cards}</div>`;
+}
+
+function buildPrices(prices){
+  const id='pr-'+Date.now();
+  const rows=prices.map(p=>`
+  <div class="price-row">
+    <div class="price-platform"><div class="price-dot"></div><span class="price-name">${esc(p.platform||'')}</span></div>
+    <div class="price-right">
+      <span class="price-val">${esc(p.price||'')}</span>
+      ${p.status?`<span class="price-status">${esc(p.status)}</span>`:''}
+      ${p.url?`<a href="${esc(p.url)}" target="_blank" class="price-link">Shop →</a>`:''}
+    </div>
+  </div>`).join('');
+  return `<div class="price-section">
+  <div class="acc-header price-hdr" onclick="toggleAcc('${id}',this)">
+    <div class="acc-header-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Price Comparison — India (₹)
+    </div>
+    <svg class="acc-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="price-body collapsible open" id="${id}">${rows}</div>
+</div>`;
+}
+
+function buildDealers(dealers){
+  if(!dealers||!dealers.length)return'';
+  const id='dl-'+Date.now();
+  const header=dealers[0];
+  const dealerRows=dealers.slice(1);
+  const rows=dealerRows.map((d,i)=>{
+    if(!d.dealer_code&&!d.address)return'';
+    const addr=d.address?`<div style="font-size:11px;color:var(--text-sub);margin-top:2px;line-height:1.35">${esc(d.address)}</div>`:'';
+    const code=d.dealer_code?`<span style="font-family:monospace;font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:1px 6px;color:var(--text-body)">${esc(d.dealer_code)}</span>`:'';
+    const sp=d.sales_person?`<div style="font-size:10.5px;color:var(--text-sub);margin-top:2px">📞 ${esc(d.sales_person)}</div>`:'';
+    return `<div class="dealer-row">
+      <div class="dealer-icon">${(i%3===0)?'🏪':(i%3===1)?'📷':'🔭'}</div>
+      <div class="dealer-info">
+        <div class="dealer-name">${esc(d.name||'')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+          ${code}
+          <span style="font-size:11px;color:var(--text-sub)">📍 ${esc(d.location||'')}</span>
+        </div>
+        ${addr}${sp}
+      </div>
+      ${d.url?`<a href="${esc(d.url)}" target="_blank" class="dealer-link" style="margin-left:8px;flex-shrink:0">↗</a>`:''}
+    </div>`;
+  }).filter(Boolean).join('');
+  return `<div class="dealer-section">
+  <div class="acc-header dealer-hdr" onclick="toggleAcc('${id}',this)">
+    <div class="acc-header-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>${esc(header.name||'Authorised Dealer Network')}</span>
+      ${header.type?`<span style="font-size:10.5px;font-weight:400;color:#7c3aed;margin-left:4px">(${esc(header.type)})</span>`:''}
+    </div>
+    <svg class="acc-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="dealer-body collapsible open" id="${id}">
+    ${rows||`<div style="padding:12px;color:var(--text-sub);font-size:12.5px">No dealers found. <a href="https://sigmaindia.in/dealer-network/" target="_blank" style="color:#7c3aed">Search all dealers →</a></div>`}
+  </div>
+</div>`;
+}
+
+function buildServiceCenters(centers){
+  if(!centers||!centers.length)return'';
+  const id='sc-'+Date.now();
+  const rows=centers.map((d,i)=>{
+    const addr=d.address?`<div style="font-size:11px;color:var(--text-sub);margin-top:2px;line-height:1.35">${esc(d.address)}</div>`:'';
+    const phone=d.phone?`<div style="font-size:10.5px;color:var(--text-sub);margin-top:2px">📞 ${esc(d.phone)}</div>`:'';
+    const email=d.email?`<div style="font-size:10.5px;color:var(--text-sub);margin-top:2px">✉️ ${esc(d.email)}</div>`:'';
+    return `<div class="dealer-row">
+      <div class="dealer-icon">${(i%3===0)?'🛠️':(i%3===1)?'🔧':'📷'}</div>
+      <div class="dealer-info">
+        <div class="dealer-name">${esc(d.name||'')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:var(--text-sub)">📍 ${esc(d.location||'')}</span></div>
+        ${addr}${phone}${email}
+      </div>
+      ${d.url?`<a href="${esc(d.url)}" target="_blank" class="dealer-link" style="margin-left:8px;flex-shrink:0">↗</a>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="dealer-section">
+  <div class="acc-header dealer-hdr" onclick="toggleAcc('${id}',this)">
+    <div class="acc-header-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4-1.4l7-7a1 1 0 011.4 0z"/><path d="M16 3l5 5"/><path d="M2 22l6-2 12-12-4-4L4 16 2 22z"/></svg>
+      <span>Authorised Service Centers</span>
+    </div>
+    <svg class="acc-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="dealer-body collapsible open" id="${id}">
+    ${rows||`<div style="padding:12px;color:var(--text-sub);font-size:12.5px">No service centers found.</div>`}
+  </div>
+</div>`;
+}
+
+function toggleAcc(id,hdr){
+  const body=document.getElementById(id);
+  const chev=hdr.querySelector('.acc-chevron');
+  if(!body)return;
+  body.classList.toggle('open');
+  if(chev)chev.classList.toggle('open');
+}
+
+function fmtText(t){
+  let s=esc(t);
+  s=s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\*(.*?)\*/g,'<em>$1</em>');
+  s=s.replace(/`(.*?)`/g,`<code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>`);
+  const paras=s.split('\n\n').filter(p=>p.trim());
+  if(!paras.length)return'<p>Here are the results.</p>';
+  return paras.map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+}
+
+function esc(s){
+  if(!s)return'';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function resetChat(){
+  fetch('/reset',{method:'POST'}).then(()=>{
+    fetch('/config-public').then(r=>r.json()).then(cfg=>{
+      const welcome=(cfg.welcome_message||'Welcome to Sigma India. I can help you find the perfect lens or camera for your creative vision — whether you\'re shooting weddings, wildlife, or cinematic video. What are you working on?').trim();
+      document.getElementById('messages-inner').innerHTML=`
+      <div class="welcome" id="welcome-screen">
+        <p class="pursuit-label">Pursuit of Perfection</p>
+        <h1 class="hero-headline">How can I assist you today?</h1>
+        <p class="hero-sub">Ask about lenses, cameras, dealers, or the loyalty programme. I'm here to help.</p>
+        <div class="section-divider"><span class="section-divider-label">Quick Topics</span></div>
+        <div class="topics">
+          <button class="topic-btn" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">Wedding photography</button>
+          <button class="topic-btn" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">Video / Vlog</button>
+          <button class="topic-btn" onclick="sendMessage('Compact travel zoom lens for mirrorless')">Travel zoom</button>
+          <button class="topic-btn" onclick="sendMessage('Sigma macro lens for product photography')">Macro lens</button>
+          <button class="topic-btn" onclick="sendMessage('Show me authorised Sigma dealers near me')">Find a dealer</button>
+          <button class="topic-btn" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">Loyalty program</button>
+        </div>
+        <div class="assistant-section-label">Sigma Assistant</div>
+        <div class="assistant-card" id="welcome-main-msg">${esc(welcome)}</div>
+      </div>`;
+      userMsgCount=0; leadCaptured=false; leadDismissed=false;
+    }).catch(()=>{
+      document.getElementById('messages-inner').innerHTML=`
+      <div class="welcome" id="welcome-screen">
+        <p class="pursuit-label">Pursuit of Perfection</p>
+        <h1 class="hero-headline">How can I assist you today?</h1>
+        <p class="hero-sub">Ask about lenses, cameras, dealers, or the loyalty programme.</p>
+        <div class="section-divider"><span class="section-divider-label">Quick Topics</span></div>
+        <div class="topics">
+          <button class="topic-btn" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">Wedding photography</button>
+          <button class="topic-btn" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">Video / Vlog</button>
+          <button class="topic-btn" onclick="sendMessage('Compact travel zoom lens for mirrorless')">Travel zoom</button>
+          <button class="topic-btn" onclick="sendMessage('Sigma macro lens for product photography')">Macro lens</button>
+          <button class="topic-btn" onclick="sendMessage('Show me authorised Sigma dealers near me')">Find a dealer</button>
+          <button class="topic-btn" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">Loyalty program</button>
+        </div>
+        <div class="assistant-section-label">Sigma Assistant</div>
+        <div class="assistant-card">Welcome to Sigma India. What are you working on?</div>
+      </div>`;
+    });
+  });
+}
+</script>
+</body>
+</html>

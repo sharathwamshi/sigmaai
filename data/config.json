@@ -1,0 +1,23 @@
+{
+  "language": "English",
+  "response_length": "short",
+  "response_style": "professional",
+  "show_comparison": true,
+  "show_price_table": true,
+  "show_dealer_section": true,
+  "show_amazon_links": true,
+  "max_products_shown": 6,
+  "currency": "INR",
+  "usd_to_inr_rate": 84,
+  "mandatory_message": "\ud83c\udfc6 Join the <a href=\"https://sigmaindia.in/loyalty-program/\" target=\"_blank\">Sigma Loyalty Program</a> for exclusive rewards.",
+  "loyalty_program": "Sigma India Loyalty Program: Register at sigmaindia.in for extended 3-year warranty. Gold members get 5% off next purchase.",
+  "offer_banner": "",
+  "site_url": "https://sigmaindia.in/",
+  "brand_name": "Sigma ",
+  "welcome_message": "Welcome to Sigma India. I can help you find the perfect lens or camera for your creative vision - whether you are shooting weddings, wildlife or cinematic video. What are you working on ?",
+  "bot_personality": "professional",
+  "updated_at": "2026-05-26T13:21:15.498606",
+  "collect_user_data": true,
+  "user_data_message_gap": 3,
+  "collect_user_prompt": "May I have your name and phone number so our team can assist you better and you can get info on our loyalty programs"
+}

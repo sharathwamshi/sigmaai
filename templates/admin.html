@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sigma Admin — Control Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff;--bg2:#f7f7f7;--bg3:#f0f0f0;--bg4:#e5e5e5;
+  --border:#e0e0e0;--border2:#c8c8c8;
+  --text1:#0a0a0a;--text2:#3a3a3a;--text3:#666;--text4:#999;
+  --black:#0a0a0a;--black2:#1a1a1a;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-b:#bbf7d0;
+  --red:#dc2626;--red-bg:#fef2f2;--red-b:#fecaca;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-b:#bfdbfe;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-b:#fde68a;
+  --purple:#7c3aed;--purple-bg:#faf5ff;--purple-b:#ddd6fe;
+  --font:'Inter',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --r:8px;--r-sm:5px;
+  --sidebar:222px;--header:54px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ─────────────────────────────────────────── */
+.side{width:var(--sidebar);background:#0a0a0a;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.side-logo{padding:15px 14px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;gap:10px}
+.side-logo-mark{width:30px;height:30px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:15px;color:#000}
+.side-logo-text{font-size:12.5px;font-weight:700;color:#fff;line-height:1.2}
+.side-logo-sub{font-size:10px;color:#555;font-weight:400}
+.side-nav{flex:1;padding:8px;overflow-y:auto}
+.side-nav::-webkit-scrollbar{width:3px}
+.side-nav::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.nav-section{font-size:9.5px;font-weight:700;color:#444;letter-spacing:.1em;text-transform:uppercase;padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:5px;color:#888;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .14s;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap}
+.nav-item:hover{background:#1c1c1c;color:#ddd}
+.nav-item.active{background:#fff;color:#000;font-weight:600}
+.nav-item svg{flex-shrink:0;width:15px;height:15px;opacity:.7}
+.nav-item.active svg{opacity:1}
+.side-footer{padding:10px;border-top:1px solid #1a1a1a}
+.side-footer-link{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;color:#555;font-size:12px;text-decoration:none;transition:all .14s}
+.side-footer-link:hover{background:#1c1c1c;color:#aaa}
+
+/* ── MAIN ────────────────────────────────────────────── */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:var(--header);background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:8px}
+.topbar-badge{background:var(--bg3);border:1px solid var(--border);color:var(--text3);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:.04em}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.content{flex:1;overflow-y:auto;padding:22px;background:var(--bg2)}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block}
+@keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.panel.active .card{animation:fade-in .22s ease}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.card-title{font-size:13.5px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:8px}
+.card-body{padding:18px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.stat-val{font-size:24px;font-weight:700;color:var(--text1);line-height:1}
+.stat-label{font-size:11.5px;color:var(--text3);margin-top:4px}
+.stat-sub{font-size:10.5px;color:var(--text4);margin-top:2px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-sm);font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .14s;white-space:nowrap}
+.btn-black{background:var(--black);color:#fff}
+.btn-black:hover{background:var(--black2)}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--bg3)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b)}
+.btn-danger:hover{background:#fee2e2}
+.btn-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
+.btn-green:hover{background:#dcfce7}
+.btn-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-b)}
+.btn-blue:hover{background:#dbeafe}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.one{grid-template-columns:1fr}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-row.four{grid-template-columns:1fr 1fr 1fr 1fr}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:var(--font);font-size:13px;color:var(--text1);background:var(--bg);transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--black);box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.field textarea{resize:vertical;min-height:70px}
+.field input[type="number"]{width:100%}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;font-weight:500;color:var(--text1)}
+.toggle-sub{font-size:11.5px;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:#ddd;border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--black)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:9px 12px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+
+/* TABLE CONTROLS */
+.tbl-controls{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg);flex-wrap:wrap}
+.search-input{flex:1;min-width:160px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:var(--font);font-size:13px;color:var(--text1);background:var(--bg)}
+.search-input:focus{outline:none;border-color:var(--black)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--r);width:90%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-sm{max-width:480px}
+.modal-header{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:14px;font-weight:700;color:var(--text1)}
+.modal-close{width:28px;height:28px;background:var(--bg3);border:none;border-radius:var(--r-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:18px;line-height:1}
+.modal-close:hover{background:var(--bg4)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:13px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* IMAGE */
+.img-cell{width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border);background:var(--bg2)}
+.img-placeholder{width:36px;height:36px;border-radius:4px;border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text4)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:600}
+.badge-art{background:#f0f0f0;color:#333}
+.badge-cont{background:var(--blue-bg);color:var(--blue)}
+.badge-sports{background:var(--amber-bg);color:var(--amber)}
+.badge-cine{background:var(--purple-bg);color:var(--purple)}
+.badge-cam{background:#f8fafc;color:#475569}
+.badge-acc{background:var(--green-bg);color:var(--green)}
+.badge-ok{background:var(--green-bg);color:var(--green)}
+.badge-no{background:var(--bg3);color:var(--text3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:2000;transform:translateY(60px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:var(--red)}
+.toast.success{background:var(--green)}
+
+/* CONV */
+.conv-item{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;transition:background .13s}
+.conv-item:hover{background:var(--bg2)}
+.conv-item:last-child{border-bottom:none}
+.conv-preview{font-size:12.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px}
+.conv-meta{font-size:11px;color:var(--text4);white-space:nowrap;text-align:right;flex-shrink:0}
+.msg-bbl{padding:9px 13px;border-radius:7px;font-size:12.5px;line-height:1.55;margin-bottom:7px;max-width:88%}
+.msg-bbl.user{background:var(--black);color:#fff;margin-left:auto}
+.msg-bbl.assistant{background:var(--bg3);color:var(--text2);margin-right:auto}
+.msg-role{font-size:10.5px;color:var(--text4);margin-bottom:3px}
+
+/* OFFER PREVIEW */
+.offer-preview{background:var(--black);color:#fff;padding:10px 16px;border-radius:var(--r-sm);font-size:13px;text-align:center;margin-top:10px;display:none}
+
+/* SECTION DIVIDER */
+.section-divider{font-size:11px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+@media(max-width:768px){.side{display:none}.stats-row{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr}.form-row.three,.form-row.four{grid-template-columns:1fr}}
+
+/* LOGIN OVERLAY */
+.login-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(4px);
+}
+
+.login-box{
+  width:100%;
+  max-width:380px;
+  background:#fff;
+  border-radius:12px;
+  padding:28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+
+.login-title{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.login-sub{
+  font-size:13px;
+  color:#666;
+  margin-bottom:22px;
+}
+
+.login-field{
+  margin-bottom:14px;
+}
+
+.login-field input{
+  width:100%;
+  padding:11px 14px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:14px;
+}
+
+.login-btn{
+  width:100%;
+  height:44px;
+  border:none;
+  border-radius:8px;
+  background:#000;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.login-error{
+  color:#dc2626;
+  font-size:12px;
+  margin-top:10px;
+  display:none;
+}
+</style>
+</head>
+<body>
+  <!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+
+    <div class="login-title">Sigma Admin</div>
+    <div class="login-sub">
+      Login to continue
+    </div>
+
+    <div class="login-field">
+      <input
+        type="text"
+        id="loginUsername"
+        placeholder="Username"
+      />
+    </div>
+
+    <div class="login-field">
+      <input
+        type="password"
+        id="loginPassword"
+        placeholder="Password"
+        onkeydown="if(event.key==='Enter'){adminLogin()}"
+      />
+    </div>
+
+    <button class="login-btn" onclick="adminLogin()">
+      Login
+    </button>
+
+    <div class="login-error" id="loginError">
+      Invalid username or password
+    </div>
+
+  </div>
+</div>
+<div class="shell" id="adminShell" style="display:none">
+
+<!-- ── SIDEBAR ─────────────────────────────────────────── -->
+<aside class="side">
+  <div class="side-logo">
+    <div class="side-logo-mark">Σ</div>
+    <div>
+      <div class="side-logo-text">Sigma Admin</div>
+      <div class="side-logo-sub">Control Panel</div>
+    </div>
+  </div>
+  <nav class="side-nav">
+    <div class="nav-section">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+    </button>
+    <div class="nav-section">Catalogue</div>
+    <button class="nav-item" onclick="showPanel('products',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Products
+    </button>
+    <button class="nav-item" onclick="showPanel('images',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Product Images
+    </button>
+     <button class="nav-item" onclick="showPanel('dealers',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dealer Network
+    </button>
+    <button class="nav-item" onclick="showPanel('prices',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Product Prices
+    </button>
+    <button class="nav-item" onclick="showPanel('servicecenters',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>Service Centers
+    </button>
+    <div class="nav-section">Chatbot</div>
+    <button class="nav-item" onclick="showPanel('chatbot',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Bot Config
+    </button>
+    <button class="nav-item" onclick="showPanel('offers',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Offers & Messaging
+    </button>
+    <div class="nav-section">Analytics</div>
+    <button class="nav-item" onclick="showPanel('conversations',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z"/></svg>Conversations
+    </button>
+    <button class="nav-item" onclick="showPanel('leads',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>User Leads
+    </button>
+  </nav>
+  <div class="side-footer">
+    <a href="/" target="_blank" class="side-footer-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      View Chatbot
+    </a>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────── -->
+<div class="main-area">
+  <div class="topbar">
+    <div class="topbar-title">
+      <span id="panel-title">Dashboard</span>
+      <span class="topbar-badge" id="panel-badge">Overview</span>
+    </div>
+    <div class="topbar-right">
+      <span id="topbar-status" style="font-size:11.5px;color:var(--text4)">Loading…</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ════════════════════════════════════ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-val" id="s-products">—</div><div class="stat-label">Products</div><div class="stat-sub">From Excel</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-dealers">—</div><div class="stat-label">Dealers</div><div class="stat-sub">Across India</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-convs">—</div><div class="stat-label">Conversations</div><div class="stat-sub">All sessions</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-msgs">—</div><div class="stat-label">Messages</div><div class="stat-sub">User messages</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-leads">—</div><div class="stat-label">Leads</div><div class="stat-sub">Contacts captured</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+        <div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-black" onclick="showPanel('products',null)">Manage Products</button>
+          <button class="btn btn-outline" onclick="showPanel('dealers',null)">Dealer Network</button>
+          <button class="btn btn-outline" onclick="showPanel('chatbot',null)">Bot Config</button>
+          <button class="btn btn-outline" onclick="showPanel('offers',null)">Set Offers</button>
+          <button class="btn btn-outline" onclick="showPanel('conversations',null)">Conversations</button>
+          <button class="btn btn-outline" onclick="showPanel('leads',null)">View Leads</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">💬 Recent Conversations</div></div>
+          <div id="db-convs" style="max-height:260px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ Config Summary</div></div>
+          <div class="card-body"><div id="db-cfg" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCTS ════════════════════════════════════ -->
+    <div class="panel" id="panel-products">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🗂 Products <span class="topbar-badge" id="prod-count-badge">0</span></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-black btn-sm" onclick="openAddProductModal()">+ Add Product</button>
+            <select id="sheet-filter" class="search-input" style="width:auto;padding:5px 10px;font-size:12px" onchange="filterProducts()">
+              <option value="">All Categories</option>
+              <option>Still Lenses</option><option>Cine Lenses</option>
+              <option>Cameras</option><option>Accessories</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-controls">
+          <input class="search-input" id="prod-search" placeholder="Search products…" oninput="filterProducts()"/>
+          <button class="btn btn-outline btn-sm" onclick="loadProducts()">↻ Refresh</button>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th style="width:40px">Img</th><th>Product Name</th><th>Category</th>
+            <th>Line</th><th>Focal / Ap</th><th>Price (₹)</th>
+            <th style="width:130px">Actions</th>
+          </tr></thead>
+          <tbody id="prod-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ IMAGES ════════════════════════════════════════ -->
+    <div class="panel" id="panel-images">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🖼 Product Images</div>
+          <span style="font-size:12px;color:var(--text3)">PNG · JPG · WEBP · max 5MB</span>
+        </div>
+        <div class="tbl-controls">
+          <input class="search-input" id="img-search" placeholder="Search products…" oninput="filterImages()"/>
+          <select id="img-cat" class="search-input" style="width:auto;padding:5px 10px;font-size:12px" onchange="filterImages()">
+            <option value="">All</option>
+            <option>Still Lenses</option><option>Cine Lenses</option>
+            <option>Cameras</option><option>Accessories</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th style="width:56px">Image</th><th>Product Name</th>
+            <th>Category</th><th>Status</th><th style="width:200px">Actions</th>
+          </tr></thead>
+          <tbody id="img-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DEALERS ════════════════════════════════════════ -->
+    <div class="panel" id="panel-dealers">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏪 Dealer Network <span class="topbar-badge" id="dealer-count-badge">0</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-black btn-sm" onclick="openAddDealerModal()">+ Add Dealer</button>
+            <select id="dealer-region-filter" class="search-input" style="width:auto;padding:5px 10px;font-size:12px" onchange="filterDealers()">
+              <option value="">All Regions</option>
+              <option value="chn">Chennai &amp; South</option>
+              <option value="del">Delhi &amp; North</option>
+              <option value="klr">Kerala</option>
+              <option value="klt">Kolkata &amp; East</option>
+              <option value="bng">Bangalore &amp; West</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-controls">
+          <input class="search-input" id="dealer-search" placeholder="Search by name, city, dealer code…" oninput="filterDealers()"/>
+          <button class="btn btn-outline btn-sm" onclick="loadDealers()">↻ Refresh</button>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>Dealer Code</th><th>Customer Name</th><th>City</th>
+            <th>Region</th><th>Sales Person</th><th>GST No</th>
+            <th style="width:120px">Actions</th>
+          </tr></thead>
+          <tbody id="dealer-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CHATBOT CONFIG ══════════════════════════════════ -->
+    <div class="panel" id="panel-chatbot">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤖 Chatbot Configuration</div>
+          <button class="btn btn-black btn-sm" onclick="saveConfig()">💾 Save Config</button>
+        </div>
+        <div class="card-body">
+
+          <div class="section-divider">Language &amp; Response Style</div>
+          <div class="form-row three">
+            <div class="field">
+              <label>Response Language</label>
+              <select id="cfg-language">
+                <option>English</option><option>Hindi</option><option>Tamil</option>
+                <option>Telugu</option><option>Kannada</option><option>Malayalam</option>
+                <option>Marathi</option><option>Bengali</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Response Length</label>
+              <select id="cfg-response-length">
+                <option value="short">Short — concise</option>
+                <option value="medium">Medium — balanced</option>
+                <option value="detailed">Detailed — technical</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Response Style</label>
+              <select id="cfg-response-style">
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly &amp; Warm</option>
+                <option value="technical">Highly Technical</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-divider">Brand &amp; Currency</div>
+          <div class="form-row">
+            <div class="field">
+              <label>Brand Name (shown in UI)</label>
+              <input type="text" id="cfg-brand-name"/>
+            </div>
+            <div class="field">
+              <label>Site URL (all product links)</label>
+              <input type="text" id="cfg-site-url"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>USD → INR Rate</label>
+              <input type="number" id="cfg-rate" min="60" max="120"/>
+            </div>
+            <div class="field">
+              <label>Max Products Per Response</label>
+              <input type="number" id="cfg-max-products" min="1" max="12"/>
+            </div>
+          </div>
+          <div class="form-row one">
+            <div class="field">
+              <label>Welcome Message</label>
+              <textarea id="cfg-welcome-message" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="section-divider">Feature Toggles</div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Show Product Comparison</div><div class="toggle-sub">Allow AI to compare products</div></div>
+            <label class="toggle"><input type="checkbox" id="cfg-show-comparison"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Show Price Comparison Table</div><div class="toggle-sub">Sigma India / Amazon / Flipkart prices</div></div>
+            <label class="toggle"><input type="checkbox" id="cfg-show-price"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Show Dealer Section</div><div class="toggle-sub">Authorised dealer accordion in responses</div></div>
+            <label class="toggle"><input type="checkbox" id="cfg-show-dealer"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Show Amazon India Links</div><div class="toggle-sub">Amazon.in buttons on product cards</div></div>
+            <label class="toggle"><input type="checkbox" id="cfg-show-amazon"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+
+          <div class="section-divider">User Data Collection</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Collect User Contact Details</div>
+              <div class="toggle-sub">Ask users for name &amp; phone during conversation</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="cfg-collect-user-data" onchange="toggleLeadFields()"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div id="lead-cfg-fields" style="display:none;padding-top:12px">
+            <div class="form-row">
+              <div class="field">
+                <label>Ask Every N Messages <span style="color:var(--text4);font-weight:400">(message gap between prompts)</span></label>
+                <input type="number" id="cfg-msg-gap" min="1" max="20" value="3"/>
+              </div>
+              <div class="field" style="grid-column:auto">
+                <label>Contact Request Prompt Message</label>
+                <input type="text" id="cfg-user-prompt" placeholder="May I have your name and phone number…"/>
+              </div>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-top:4px">
+              <div style="font-size:11px;font-weight:600;color:var(--text4);margin-bottom:4px">HOW IT WORKS</div>
+              <div style="font-size:12.5px;color:var(--text2);line-height:1.6">
+                After every <strong id="gap-preview">3</strong> user messages, a modal popup will appear asking for the user's name and phone number. 
+                The data is saved to <strong>Leads</strong> and viewable in the admin panel.
+                Users can skip the prompt — they won't be asked again in the same session.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;display:flex;justify-content:flex-end">
+            <button class="btn btn-black" onclick="saveConfig()">💾 Save All Configuration</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ OFFERS & MESSAGING ══════════════════════════════ -->
+    <div class="panel" id="panel-offers">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💬 Offers &amp; Mandatory Messaging</div>
+          <button class="btn btn-black btn-sm" onclick="saveOffers()">💾 Save</button>
+        </div>
+        <div class="card-body">
+          <div class="form-row one" style="margin-bottom:20px">
+            <div class="field">
+              <label>Offer Banner <span style="color:var(--text3);font-weight:400">(shown above chat, leave blank to hide)</span></label>
+              <input type="text" id="offer-banner" placeholder="🎉 Flat 10% off on Art lenses this Diwali! Use code SIGMA10" oninput="updateOfferPreview()"/>
+              <div id="offer-preview" class="offer-preview"></div>
+            </div>
+          </div>
+          <div class="form-row one" style="margin-bottom:20px">
+            <div class="field">
+              <label>Mandatory Message <span style="color:var(--text3);font-weight:400">(appended to every AI response)</span></label>
+              <textarea id="mandatory-message" rows="3" placeholder="📞 Call +91-XXXXXXXXXX for exclusive pricing. Visit your nearest Sigma dealer."></textarea>
+              <div style="font-size:11.5px;color:var(--text3);margin-top:5px">This text is automatically added at the end of every chatbot response.</div>
+            </div>
+          </div>
+          <div class="form-row one">
+            <div class="field">
+              <label>Loyalty Program Details <span style="color:var(--text3);font-weight:400">(AI mentions when relevant)</span></label>
+              <textarea id="loyalty-program" rows="4" placeholder="Sigma India Loyalty Program: Register at sigmaindia.in for extended 3-year warranty. Gold members get 5% off next purchase."></textarea>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:4px">
+            <button class="btn btn-black" onclick="saveOffers()">💾 Save Messaging</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CONVERSATIONS ═══════════════════════════════════ -->
+    <div class="panel" id="panel-conversations">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💬 Conversations <span class="topbar-badge" id="conv-count-badge">0</span></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="loadConversations()">↻ Refresh</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmClearConvs()">🗑 Clear All</button>
+          </div>
+        </div>
+        <div class="tbl-controls">
+          <input class="search-input" id="conv-search" placeholder="Search conversations…" oninput="filterConversations()"/>
+        </div>
+        <div id="conv-list" style="max-height:calc(100vh - 260px);overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- ══ LEADS ════════════════════════════════════════════ -->
+    <div class="panel" id="panel-leads">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👤 User Leads <span class="topbar-badge" id="leads-count-badge">0</span></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="loadLeads()">↻ Refresh</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmClearLeads()">🗑 Clear All</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>#</th><th>Name</th><th>Phone</th>
+            <th>Session ID</th><th>Messages</th><th>Captured At</th>
+          </tr></thead>
+          <tbody id="leads-tbody"></tbody></table>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)">
+          Leads are captured when users fill the contact form during conversation. Configure in <strong>Bot Config → User Data Collection</strong>.
+        </div>
+      </div>
+    </div>
+
+     <!-- ══ PRODUCT PRICES ══════════════════════════════════════ -->
+    <div class="panel" id="panel-prices">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Product Prices
+            <span class="topbar-badge" id="prices-count-badge">0 products</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:var(--text3)"></span>
+            <button class="btn btn-outline btn-sm" onclick="loadPrices()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="tbl-controls">
+          <input class="search-input" id="prices-search" placeholder="Search products…" oninput="filterPrices()"/>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>Product Name</th>
+            <th>Price (₹)</th>
+            <th>Price Range (₹)</th>
+            <th>USD Base</th>
+            <th>Source</th>
+            <th style="width:110px">Actions</th>
+          </tr></thead>
+          <tbody id="prices-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ══ SERVICE CENTERS ════════════════════════════════════ -->
+    <div class="panel" id="panel-servicecenters">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔧 Authorised Service Centers
+            <span class="topbar-badge" id="sc-count-badge">0</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-black btn-sm" onclick="openAddScModal()">+ Add Centre</button>
+            <button class="btn btn-outline btn-sm" onclick="loadServiceCenters()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>Name</th><th>City</th><th>State</th>
+            <th>Phone</th><th>Email</th>
+            <th style="width:120px">Actions</th>
+          </tr></thead>
+          <tbody id="sc-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+ 
+
+  </div>
+</div>
+</div><!-- /shell -->
+
+<!-- ── EDIT PRODUCT MODAL ─────────────────────────────── -->
+<div class="modal-overlay" id="edit-prod-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Product</div>
+      <button class="modal-close" onclick="closeModal('edit-prod-modal')">×</button>
+    </div>
+    <div class="modal-body" id="edit-prod-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('edit-prod-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveProductEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD PRODUCT MODAL ──────────────────────────────── -->
+<div class="modal-overlay" id="add-prod-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">➕ Add Product</div>
+      <button class="modal-close" onclick="closeModal('add-prod-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Category Sheet</label>
+          <select id="add-sheet"><option>Still Lenses</option><option>Cine Lenses</option><option>Cameras</option><option>Accessories</option></select>
+        </div>
+        <div class="field"><label>Product Name *</label><input type="text" id="add-name" placeholder="e.g. 50mm F1.4 DG DN | Art"/></div>
+      </div>
+      <div class="form-row one">
+        <div class="field"><label>Key Features</label><textarea id="add-features" rows="2" placeholder="Describe key features…"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Product Line</label><input type="text" id="add-line" placeholder="Art / Contemporary / Sports"/></div>
+        <div class="field"><label>Product URL</label><input type="text" id="add-url" placeholder="https://sigmaindia.in/…"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-prod-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveNewProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT DEALER MODAL ──────────────────────────────── -->
+<div class="modal-overlay" id="edit-dealer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Dealer</div>
+      <button class="modal-close" onclick="closeModal('edit-dealer-modal')">×</button>
+    </div>
+    <div class="modal-body" id="edit-dealer-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('edit-dealer-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveDealerEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD DEALER MODAL ───────────────────────────────── -->
+<div class="modal-overlay" id="add-dealer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">➕ Add Dealer</div>
+      <button class="modal-close" onclick="closeModal('add-dealer-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Region *</label>
+          <select id="add-dealer-sheet">
+            <option value="chn">Chennai &amp; South</option>
+            <option value="del">Delhi &amp; North</option>
+            <option value="klr">Kerala</option>
+            <option value="klt">Kolkata &amp; East</option>
+            <option value="bng">Bangalore &amp; West</option>
+          </select>
+        </div>
+        <div class="field"><label>Dealer Code *</label><input type="text" id="add-dealer-code" placeholder="e.g. CH701"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Customer / Business Name *</label><input type="text" id="add-dealer-name" placeholder="Shop / Company name"/></div>
+        <div class="field"><label>Sales Person</label><input type="text" id="add-dealer-sp" placeholder="Sales representative name"/></div>
+      </div>
+      <div class="form-row one"><div class="field"><label>Address Line 1</label><input type="text" id="add-dealer-a1" placeholder="Street / Building"/></div></div>
+      <div class="form-row">
+        <div class="field"><label>Address Line 2</label><input type="text" id="add-dealer-a2"/></div>
+        <div class="field"><label>Address Line 3</label><input type="text" id="add-dealer-a3"/></div>
+      </div>
+      <div class="form-row four">
+        <div class="field"><label>City *</label><input type="text" id="add-dealer-city" placeholder="City"/></div>
+        <div class="field"><label>State Code</label><input type="text" id="add-dealer-state" placeholder="e.g. 33"/></div>
+        <div class="field"><label>Pincode</label><input type="text" id="add-dealer-pin" placeholder="600001"/></div>
+        <div class="field"><label>Company Parent ID</label><input type="text" id="add-dealer-pid" placeholder="2024"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>GST Number</label><input type="text" id="add-dealer-gst" placeholder="33XXXXX…"/></div>
+        <div class="field"><label>PAN Number</label><input type="text" id="add-dealer-pan" placeholder="XXXXX1234X"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-dealer-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveNewDealer()">Add Dealer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONVERSATION DETAIL MODAL ──────────────────────── -->
+<div class="modal-overlay" id="conv-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div class="modal-title" id="conv-modal-title">Conversation</div>
+      <button class="modal-close" onclick="closeModal('conv-modal')">×</button>
+    </div>
+    <div class="modal-body" id="conv-modal-body" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="conv-del-btn">🗑 Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('conv-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT PRICE MODAL ───────────────────────────── -->
+<div class="modal-overlay" id="edit-price-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="edit-price-title">Edit Price</div>
+      <button class="modal-close" onclick="closeModal('edit-price-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ep-name"/>
+      <div class="form-row one">
+        <div class="field">
+          <label>Product Name</label>
+          <input type="text" id="ep-display-name" disabled style="opacity:.6"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Price (₹) — e.g. ₹84,000</label>
+          <input type="text" id="ep-price-inr" placeholder="₹84,000"/>
+        </div>
+        <div class="field">
+          <label>Price Range (₹) — e.g. ₹80,000 – ₹88,000</label>
+          <input type="text" id="ep-price-range" placeholder="₹80,000 – ₹88,000"/>
+        </div>
+      </div>
+      <div class="form-row one">
+        <div class="field">
+          <label>USD Base Price (for reference only)</label>
+          <input type="number" id="ep-price-usd" placeholder="999"/>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--text3);margin-top:4px">
+        ℹ️ This override is saved to <strong>data/prices.json</strong>. It takes priority over the built-in USD table. Leave blank to revert to default.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="ep-reset-btn" onclick="resetPriceOverride()">Reset to Default</button>
+      <button class="btn btn-outline" onclick="closeModal('edit-price-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="savePriceEdit()">Save Price</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ── EDIT SERVICE CENTER MODAL ─────────────────── -->
+<div class="modal-overlay" id="edit-sc-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Service Center</div>
+      <button class="modal-close" onclick="closeModal('edit-sc-modal')">×</button>
+    </div>
+    <div class="modal-body" id="edit-sc-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('edit-sc-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveScEdit()">Save</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ── ADD SERVICE CENTER MODAL ──────────────────── -->
+<div class="modal-overlay" id="add-sc-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">➕ Add Service Center</div>
+      <button class="modal-close" onclick="closeModal('add-sc-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Name *</label><input type="text" id="asc-name" placeholder="Service centre name"/></div>
+        <div class="field"><label>Type</label><input type="text" id="asc-type" value="Authorised Service Centre"/></div>
+      </div>
+      <div class="form-row one"><div class="field"><label>Address *</label><textarea id="asc-address" rows="2" placeholder="Full address with pincode"></textarea></div></div>
+      <div class="form-row">
+        <div class="field"><label>City *</label><input type="text" id="asc-city"/></div>
+        <div class="field"><label>State</label><input type="text" id="asc-state"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Phone</label><input type="text" id="asc-phone" placeholder="Mobile / Landline"/></div>
+        <div class="field"><label>Email</label><input type="email" id="asc-email"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-sc-modal')">Cancel</button>
+      <button class="btn btn-black" onclick="saveNewSc()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   SIGMA ADMIN — Full JS
+   ═══════════════════════════════════════════════════════ */
+
+let ALL_PRODUCTS = [], ALL_DEALERS = [], ALL_CONVS = [], CONFIG = {};
+let EDIT_PROD = {}, EDIT_DEALER = {};
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── PANELS ────────────────────────────────────────────
+const PANEL_META = {
+  dashboard:     {title:'Dashboard',      badge:'Overview'},
+  products:      {title:'Products',       badge:'Excel Data'},
+  images:        {title:'Product Images', badge:'Upload'},
+  dealers:       {title:'Dealer Network', badge:'1215+ Dealers'},
+  chatbot:       {title:'Bot Config',     badge:'AI Settings'},
+  offers:        {title:'Offers & Messaging', badge:'Messaging'},
+  conversations: {title:'Conversations',  badge:'History'},
+  leads:         {title:'User Leads',     badge:'Contacts'},
+  prices:        {title:'Product Prices', badge:'INR Pricing'},
+  servicecenters:{title:'Service Centers',badge:'Repair & Support'},
+};
+
+function showPanel(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  const m=PANEL_META[id]||{title:id, badge:''};
+  document.getElementById('panel-title').textContent=m.title;
+  document.getElementById('panel-badge').textContent=m.badge;
+   const loaders={
+    products: loadProducts, images: loadImages, dealers: loadDealers,
+    chatbot: loadConfigForm, conversations: loadConversations,
+    offers: loadOffersForm, leads: loadLeads,
+    prices: loadPrices, servicecenters: loadServiceCenters,
+  };
+  if(loaders[id]) loaders[id]();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ── INIT ──────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', initDashboard);
+
+async function initDashboard(){
+  try{
+    const [pr,cr,lr,cfgr]=await Promise.all([
+      fetch('/admin/api/products').then(r=>r.json()),
+      fetch('/admin/api/conversations').then(r=>r.json()),
+      fetch('/admin/api/leads').then(r=>r.json()),
+      fetch('/admin/api/config').then(r=>r.json()),
+    ]);
+    ALL_PRODUCTS=pr; ALL_CONVS=cr; CONFIG=cfgr;
+    document.getElementById('s-products').textContent=pr.length;
+    document.getElementById('s-convs').textContent=cr.length;
+    document.getElementById('s-msgs').textContent=cr.reduce((a,c)=>a+(c.message_count||0),0);
+    document.getElementById('s-leads').textContent=lr.length;
+
+    // Dealer count
+    fetch('/admin/api/dealers').then(r=>r.json()).then(d=>{
+      ALL_DEALERS=d;
+      document.getElementById('s-dealers').textContent=d.length;
+    });
+
+    renderDashConvs(cr.slice(0,6));
+    renderCfgSummary(cfgr);
+    document.getElementById('topbar-status').textContent=
+      'Last saved: '+(cfgr.updated_at?new Date(cfgr.updated_at).toLocaleString('en-IN'):'Never');
+  }catch(e){toast('Failed to load dashboard','error');}
+}
+
+function renderDashConvs(convs){
+  const el=document.getElementById('db-convs');
+  if(!convs.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text4)">No conversations yet</div>';return;}
+  el.innerHTML=convs.map(c=>`
+  <div class="conv-item" onclick="openConvDetail('${c.session_id}')">
+    <div style="flex:1;min-width:0">
+      <div class="conv-preview">${esc(c.preview||'(empty)')}</div>
+      <div style="font-size:11px;color:var(--text4);margin-top:2px">${c.message_count} msgs · ${c.session_id.slice(0,10)}…</div>
+    </div>
+    <div class="conv-meta">${fmtTime(c.updated_at)}<br>${fmtDate(c.started_at)}</div>
+  </div>`).join('');
+}
+
+function renderCfgSummary(cfg){
+  const items=[
+    ['Language',cfg.language],['Response',cfg.response_length],
+    ['Max Products',cfg.max_products_shown],['INR Rate','1 USD = ₹'+cfg.usd_to_inr_rate],
+    ['Comparison',cfg.show_comparison?'✅ On':'❌ Off'],
+    ['Amazon',cfg.show_amazon_links?'✅ On':'❌ Off'],
+    ['Price Table',cfg.show_price_table?'✅ On':'❌ Off'],
+    ['Lead Capture',cfg.collect_user_data?'✅ On (every '+cfg.user_data_message_gap+' msgs)':'❌ Off'],
+  ];
+  document.getElementById('db-cfg').innerHTML=items.map(([k,v])=>`
+  <div style="padding:8px 10px;background:var(--bg2);border-radius:5px;border:1px solid var(--border)">
+    <div style="font-size:10.5px;color:var(--text4);font-weight:600;text-transform:uppercase;letter-spacing:.05em">${k}</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text1);margin-top:2px">${v}</div>
+  </div>`).join('');
+}
+
+// ── PRODUCTS ──────────────────────────────────────────
+async function loadProducts(){
+  const r=await fetch('/admin/api/products');
+  ALL_PRODUCTS=await r.json();
+  document.getElementById('prod-count-badge').textContent=ALL_PRODUCTS.length+' products';
+  filterProducts();
+}
+
+function filterProducts(){
+  const q=(document.getElementById('prod-search').value||'').toLowerCase();
+  const cat=document.getElementById('sheet-filter').value;
+  const data=ALL_PRODUCTS.filter(p=>{
+    const n=(p['Product Name']||'').toLowerCase();
+    return(!q||n.includes(q)||(p['Key Features']||'').toLowerCase().includes(q))
+          &&(!cat||p._display_category===cat);
+  });
+  const tb=document.getElementById('prod-tbody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text4)">No products found</td></tr>';return;}
+  tb.innerHTML=data.map(p=>{
+    const name=p['Product Name']||'';
+    const line=p['Product Line']||p['Category']||'';
+    const cat=p._display_category||'';
+    const badgeC=cat.includes('Still')?'badge-art':cat.includes('Cine')?'badge-cine':cat.includes('Camera')?'badge-cam':'badge-acc';
+    return `<tr>
+    <td>${p._image?`<img src="${p._image}" class="img-cell"/>`:'<div class="img-placeholder">📷</div>'}</td>
+    <td title="${esc(name)}" style="font-weight:600;max-width:200px">${esc(name)}</td>
+    <td><span class="badge ${badgeC}">${esc(cat)}</span></td>
+    <td style="color:var(--text3)">${esc(line)}</td>
+    <td style="font-family:var(--mono);font-size:11.5px">${esc(p['Focal Length']||'')} ${esc(p['Max Aperture']||p['T-Stop']||'')}</td>
+    <td style="font-weight:700;color:var(--green)">${esc(p._price_inr||'')}</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-outline btn-sm" onclick='openEditProductModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delProduct('${esc(cat)}','${esc(name)}')">Del</button>
+    </div></td></tr>`;
+  }).join('');
+}
+
+function openEditProductModal(p){
+  EDIT_PROD=p;
+  const body=document.getElementById('edit-prod-body');
+  const name=p['Product Name']||''; const sheet=p._display_category||'';
+  const fields=Object.entries(p).filter(([k])=>!k.startsWith('_'));
+  body.innerHTML=`
+  <div style="font-size:11.5px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg2);border-radius:5px;border:1px solid var(--border)">
+    Editing: <strong>${esc(name)}</strong> — ${esc(sheet)}
+  </div>
+  <input type="hidden" id="ep-sheet" value="${esc(sheet)}"/>
+  <input type="hidden" id="ep-name" value="${esc(name)}"/>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  ${fields.map(([k,v])=>`
+    <div class="field" style="${(k.includes('Features')||k.includes('Special'))?'grid-column:1/-1':''}">
+      <label>${esc(k)}</label>
+      ${(k.includes('Features')||k.includes('Special'))
+        ?`<textarea id="epf_${esc(k)}" rows="3">${esc(v)}</textarea>`
+        :`<input type="text" id="epf_${esc(k)}" value="${esc(v)}"/>`}
+    </div>`).join('')}
+  </div>`;
+  openModal('edit-prod-modal');
+}
+
+function openAddProductModal(){ openModal('add-prod-modal'); }
+
+async function saveProductEdit(){
+  const sheet=document.getElementById('ep-sheet').value;
+  const name=document.getElementById('ep-name').value;
+  const fields={};
+  document.querySelectorAll('[id^="epf_"]').forEach(el=>{fields[el.id.replace('epf_','')]=el.value;});
+  const r=await fetch('/admin/api/products/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet,product_name:name,fields})});
+  const d=await r.json();
+  if(d.ok){toast('Product saved ✓','success');closeModal('edit-prod-modal');loadProducts();}
+  else toast(d.message,'error');
+}
+
+async function saveNewProduct(){
+  const sheet=document.getElementById('add-sheet').value;
+  const name=document.getElementById('add-name').value.trim();
+  if(!name){toast('Product name required','error');return;}
+  const fields={'Product Name':name,'Key Features':document.getElementById('add-features').value,'Product Line':document.getElementById('add-line').value,'Product URL':document.getElementById('add-url').value};
+  const r=await fetch('/admin/api/products/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet,fields})});
+  const d=await r.json();
+  if(d.ok){toast('Product added ✓','success');closeModal('add-prod-modal');loadProducts();}
+  else toast(d.message,'error');
+}
+
+function delProduct(cat,name){
+  if(!confirm(`Delete "${name}" from ${cat}?`))return;
+  fetch('/admin/api/products/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet:cat,product_name:name})})
+  .then(r=>r.json()).then(d=>{if(d.ok){toast('Deleted','success');loadProducts();}else toast(d.message,'error');});
+}
+
+// ── IMAGES ────────────────────────────────────────────
+async function loadImages(){
+  if(!ALL_PRODUCTS.length){const r=await fetch('/admin/api/products');ALL_PRODUCTS=await r.json();}
+  filterImages();
+}
+function filterImages(){
+  const q=(document.getElementById('img-search').value||'').toLowerCase();
+  const cat=document.getElementById('img-cat').value;
+  const data=ALL_PRODUCTS.filter(p=>(!q||(p['Product Name']||'').toLowerCase().includes(q))&&(!cat||p._display_category===cat));
+  const tb=document.getElementById('img-tbody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text4)">No products</td></tr>';return;}
+  tb.innerHTML=data.map(p=>{
+    const name=p['Product Name']||''; const pid=p._id||''; const img=p._image;
+    return`<tr>
+    <td>${img?`<img src="${img}?t=${Date.now()}" class="img-cell" style="cursor:pointer" onclick="lightbox('${esc(img)}')"/>`:'<div class="img-placeholder">📷</div>'}</td>
+    <td style="font-weight:600">${esc(name)}</td>
+    <td style="color:var(--text3)">${esc(p._display_category||'')}</td>
+    <td><span class="badge ${img?'badge-ok':'badge-no'}">${img?'✅ Uploaded':'No image'}</span></td>
+    <td><div style="display:flex;gap:6px;align-items:center">
+      <label class="btn btn-black btn-sm" style="cursor:pointer">
+        ${img?'Replace':'Upload'}
+        <input type="file" accept="image/*" style="display:none" onchange="uploadImg(this,'${esc(pid)}')"/>
+      </label>
+      ${img?`<button class="btn btn-danger btn-sm" onclick="delImg('${esc(pid)}')">Remove</button>`:''}
+    </div></td></tr>`;
+  }).join('');
+}
+async function uploadImg(input,pid){
+  const f=input.files[0]; if(!f)return;
+  const fd=new FormData(); fd.append('image',f); fd.append('product_id',pid);
+  toast('Uploading…');
+  const r=await fetch('/admin/api/products/image',{method:'POST',body:fd});
+  const d=await r.json();
+  if(d.ok){toast('Image uploaded ✓','success');const pr=await fetch('/admin/api/products');ALL_PRODUCTS=await pr.json();filterImages();}
+  else toast(d.message,'error');
+}
+async function delImg(pid){
+  if(!confirm('Remove this image?'))return;
+  await fetch('/admin/api/products/image/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:pid})});
+  toast('Removed','success');
+  const pr=await fetch('/admin/api/products');ALL_PRODUCTS=await pr.json();filterImages();
+}
+function lightbox(url){
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  o.innerHTML=`<img src="${url}" style="max-width:90%;max-height:90%;border-radius:8px"/>`;
+  o.onclick=()=>o.remove(); document.body.appendChild(o);
+}
+
+// ── DEALERS ───────────────────────────────────────────
+async function loadDealers(){
+  const region=document.getElementById('dealer-region-filter').value;
+  const url=region?`/admin/api/dealers?sheet=${region}`:'/admin/api/dealers';
+  const r=await fetch(url);
+  ALL_DEALERS=await r.json();
+  document.getElementById('dealer-count-badge').textContent=ALL_DEALERS.length+' dealers';
+  filterDealers();
+}
+
+function filterDealers(){
+  const q=(document.getElementById('dealer-search').value||'').toLowerCase();
+  const region=document.getElementById('dealer-region-filter').value;
+  const data=ALL_DEALERS.filter(d=>{
+    const name=(d.customer_name||'').toLowerCase();
+    const city=(d.city||'').toLowerCase();
+    const code=(d.dealer_code||'').toLowerCase();
+    const sp=(d['sales person']||'').toLowerCase();
+    const matchQ=!q||name.includes(q)||city.includes(q)||code.includes(q)||sp.includes(q);
+    const matchR=!region||d._sheet===region;
+    return matchQ&&matchR;
+  });
+  renderDealersTable(data);
+}
+
+function regionLabel(sh){
+  const m={chn:'Chennai & South',del:'Delhi & North',klr:'Kerala',klt:'Kolkata & East',bng:'Bangalore & West'};
+  return m[sh]||sh;
+}
+
+function renderDealersTable(data){
+  const tb=document.getElementById('dealer-tbody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text4)">No dealers found</td></tr>';return;}
+  tb.innerHTML=data.map(d=>`<tr>
+    <td style="font-family:var(--mono);font-size:11.5px;font-weight:600">${esc(d.dealer_code||'')}</td>
+    <td style="font-weight:600;max-width:180px" title="${esc(d.customer_name||'')}">${esc(d.customer_name||'')}</td>
+    <td>${esc(d.city||'')}</td>
+    <td><span class="badge badge-cont" style="font-size:10px">${esc(regionLabel(d._sheet))}</span></td>
+    <td style="color:var(--text3)">${esc(d['sales person']||'')}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${esc(d.gst_no||'')}</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-outline btn-sm" onclick='openEditDealerModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delDealer('${esc(d._sheet)}','${esc(d.dealer_code||'')}')">Del</button>
+    </div></td></tr>`).join('');
+}
+
+function openEditDealerModal(d){
+  EDIT_DEALER=d;
+  const body=document.getElementById('edit-dealer-body');
+  const fields=[
+    ['customer_name','Business Name'],['dealer_code','Dealer Code'],
+    ['sales person','Sales Person'],['address_one','Address Line 1'],
+    ['address_two','Address Line 2'],['address_three','Address Line 3'],
+    ['address_four','Address Line 4'],['city','City'],
+    ['state','State Code'],['pincode','Pincode'],
+    ['gst_no','GST Number'],['pan_no','PAN Number'],
+    ['company_parent_id','Company Parent ID'],
+  ];
+  body.innerHTML=`
+  <div style="font-size:11.5px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg2);border-radius:5px;border:1px solid var(--border)">
+    Editing: <strong>${esc(d.customer_name||'')}</strong> · ${esc(d.dealer_code||'')} · ${esc(regionLabel(d._sheet))}
+  </div>
+  <input type="hidden" id="ed-sheet" value="${esc(d._sheet||'')}"/>
+  <input type="hidden" id="ed-code" value="${esc(d.dealer_code||'')}"/>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  ${fields.map(([k,label])=>`
+    <div class="field" style="${k.startsWith('address')?'grid-column:1/-1':''}">
+      <label>${label}</label>
+      <input type="text" id="edf_${k}" value="${esc(String(d[k]||''))}"/>
+    </div>`).join('')}
+  </div>`;
+  openModal('edit-dealer-modal');
+}
+
+async function saveDealerEdit(){
+  const sheet=document.getElementById('ed-sheet').value;
+  const code=document.getElementById('ed-code').value;
+  const fields={};
+  document.querySelectorAll('[id^="edf_"]').forEach(el=>{fields[el.id.replace('edf_','')]=el.value;});
+  const r=await fetch('/admin/api/dealers/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet,dealer_code:code,fields})});
+  const d=await r.json();
+  if(d.ok){toast('Dealer saved ✓','success');closeModal('edit-dealer-modal');loadDealers();}
+  else toast(d.message,'error');
+}
+
+function openAddDealerModal(){ openModal('add-dealer-modal'); }
+
+async function saveNewDealer(){
+  const sheet=document.getElementById('add-dealer-sheet').value;
+  const code=document.getElementById('add-dealer-code').value.trim();
+  const name=document.getElementById('add-dealer-name').value.trim();
+  if(!code||!name){toast('Dealer Code and Name required','error');return;}
+  const fields={
+    customer_name:name,dealer_code:code,
+    'sales person':document.getElementById('add-dealer-sp').value,
+    address_one:document.getElementById('add-dealer-a1').value,
+    address_two:document.getElementById('add-dealer-a2').value,
+    address_three:document.getElementById('add-dealer-a3').value,
+    city:document.getElementById('add-dealer-city').value,
+    state:document.getElementById('add-dealer-state').value,
+    pincode:document.getElementById('add-dealer-pin').value,
+    gst_no:document.getElementById('add-dealer-gst').value,
+    pan_no:document.getElementById('add-dealer-pan').value,
+    company_parent_id:document.getElementById('add-dealer-pid').value,
+  };
+  const r=await fetch('/admin/api/dealers/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet,fields})});
+  const d=await r.json();
+  if(d.ok){
+    toast('Dealer added ✓','success'); closeModal('add-dealer-modal'); loadDealers();
+    ['add-dealer-code','add-dealer-name','add-dealer-sp','add-dealer-a1','add-dealer-a2',
+     'add-dealer-a3','add-dealer-city','add-dealer-state','add-dealer-pin',
+     'add-dealer-gst','add-dealer-pan','add-dealer-pid'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+  }else toast(d.message,'error');
+}
+
+function delDealer(sheet,code){
+  if(!confirm(`Delete dealer ${code}?`))return;
+  fetch('/admin/api/dealers/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet,dealer_code:code})})
+  .then(r=>r.json()).then(d=>{if(d.ok){toast('Deleted','success');loadDealers();}else toast(d.message,'error');});
+}
+
+// ── CONFIG ────────────────────────────────────────────
+async function loadConfigForm(){
+  const r=await fetch('/admin/api/config');
+  CONFIG=await r.json();
+  document.getElementById('cfg-language').value         = CONFIG.language||'English';
+  document.getElementById('cfg-response-length').value  = CONFIG.response_length||'medium';
+  document.getElementById('cfg-response-style').value   = CONFIG.response_style||'professional';
+  document.getElementById('cfg-rate').value             = CONFIG.usd_to_inr_rate||84;
+  document.getElementById('cfg-max-products').value     = CONFIG.max_products_shown||6;
+  document.getElementById('cfg-brand-name').value       = CONFIG.brand_name||'';
+  document.getElementById('cfg-site-url').value         = CONFIG.site_url||'';
+  document.getElementById('cfg-welcome-message').value  = CONFIG.welcome_message||'';
+  document.getElementById('cfg-show-comparison').checked= !!CONFIG.show_comparison;
+  document.getElementById('cfg-show-price').checked     = !!CONFIG.show_price_table;
+  document.getElementById('cfg-show-dealer').checked    = !!CONFIG.show_dealer_section;
+  document.getElementById('cfg-show-amazon').checked    = !!CONFIG.show_amazon_links;
+  document.getElementById('cfg-collect-user-data').checked= !!CONFIG.collect_user_data;
+  document.getElementById('cfg-msg-gap').value          = CONFIG.user_data_message_gap||3;
+  document.getElementById('cfg-user-prompt').value      = CONFIG.collect_user_prompt||'';
+  document.getElementById('gap-preview').textContent    = CONFIG.user_data_message_gap||3;
+  toggleLeadFields();
+}
+
+function toggleLeadFields(){
+  const on=document.getElementById('cfg-collect-user-data').checked;
+  document.getElementById('lead-cfg-fields').style.display=on?'block':'none';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const gapEl=document.getElementById('cfg-msg-gap');
+  if(gapEl) gapEl.addEventListener('input',()=>{
+    document.getElementById('gap-preview').textContent=gapEl.value||3;
+  });
+});
+
+async function saveConfig(){
+  const data={
+    language:           document.getElementById('cfg-language').value,
+    response_length:    document.getElementById('cfg-response-length').value,
+    response_style:     document.getElementById('cfg-response-style').value,
+    usd_to_inr_rate:    parseInt(document.getElementById('cfg-rate').value)||84,
+    max_products_shown: parseInt(document.getElementById('cfg-max-products').value)||6,
+    brand_name:         document.getElementById('cfg-brand-name').value,
+    site_url:           document.getElementById('cfg-site-url').value,
+    welcome_message:    document.getElementById('cfg-welcome-message').value,
+    show_comparison:    document.getElementById('cfg-show-comparison').checked,
+    show_price_table:   document.getElementById('cfg-show-price').checked,
+    show_dealer_section:document.getElementById('cfg-show-dealer').checked,
+    show_amazon_links:  document.getElementById('cfg-show-amazon').checked,
+    collect_user_data:  document.getElementById('cfg-collect-user-data').checked,
+    user_data_message_gap: parseInt(document.getElementById('cfg-msg-gap').value)||3,
+    collect_user_prompt:document.getElementById('cfg-user-prompt').value,
+  };
+  const r=await fetch('/admin/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok) toast('Configuration saved ✓ — bot updated instantly','success');
+  else toast(d.message,'error');
+}
+
+// ── OFFERS ────────────────────────────────────────────
+async function loadOffersForm(){
+  const r=await fetch('/admin/api/config');
+  CONFIG=await r.json();
+  document.getElementById('offer-banner').value     =CONFIG.offer_banner||'';
+  document.getElementById('mandatory-message').value=CONFIG.mandatory_message||'';
+  document.getElementById('loyalty-program').value  =CONFIG.loyalty_program||'';
+  updateOfferPreview();
+}
+function updateOfferPreview(){
+  const v=(document.getElementById('offer-banner')||{}).value||'';
+  const p=document.getElementById('offer-preview');
+  if(!p)return;
+  if(v.trim()){p.style.display='block';p.textContent=v;}
+  else p.style.display='none';
+}
+async function saveOffers(){
+  const data={
+    offer_banner:      document.getElementById('offer-banner').value,
+    mandatory_message: document.getElementById('mandatory-message').value,
+    loyalty_program:   document.getElementById('loyalty-program').value,
+  };
+  const r=await fetch('/admin/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.ok) toast('Messaging saved ✓','success');
+  else toast(d.message,'error');
+}
+
+// ── CONVERSATIONS ─────────────────────────────────────
+async function loadConversations(){
+  const r=await fetch('/admin/api/conversations');
+  ALL_CONVS=await r.json();
+  document.getElementById('conv-count-badge').textContent=ALL_CONVS.length+' sessions';
+  filterConversations();
+}
+function filterConversations(){
+  const q=(document.getElementById('conv-search').value||'').toLowerCase();
+  const data=ALL_CONVS.filter(c=>!q||(c.preview||'').toLowerCase().includes(q)||c.session_id.includes(q));
+  const el=document.getElementById('conv-list');
+  if(!data.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--text4)">No conversations found</div>';return;}
+  el.innerHTML=data.map(c=>`
+  <div class="conv-item" onclick="openConvDetail('${c.session_id}')">
+    <div style="flex:1;min-width:0">
+      <div class="conv-preview">${esc(c.preview||'(empty)')}</div>
+      <div style="font-size:11px;color:var(--text4);margin-top:2px">${c.message_count} messages · ${c.session_id.slice(0,14)}…</div>
+    </div>
+    <div class="conv-meta">${fmtTime(c.updated_at)}<br>${fmtDate(c.started_at)}</div>
+  </div>`).join('');
+}
+async function openConvDetail(sid){
+  const r=await fetch(`/admin/api/conversations/${sid}`);
+  const c=await r.json();
+  document.getElementById('conv-modal-title').textContent=`Session ${sid.slice(0,14)}… · ${c.message_count||0} messages`;
+  const body=document.getElementById('conv-modal-body');
+  body.innerHTML=(c.messages||[]).map(m=>`
+  <div style="margin-bottom:6px">
+    <div class="msg-role">${m.role==='user'?'👤 User':'🤖 Sigma AI'}</div>
+    <div class="msg-bbl ${m.role}">${esc(m.content.slice(0,500))}${m.content.length>500?'…':''}</div>
+  </div>`).join('');
+  body.scrollTop=body.scrollHeight;
+  document.getElementById('conv-del-btn').onclick=()=>delConversation(sid);
+  openModal('conv-modal');
+}
+async function delConversation(sid){
+  if(!confirm('Delete this conversation?'))return;
+  const r=await fetch('/admin/api/conversations/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid})});
+  const d=await r.json();
+  if(d.ok){toast('Deleted','success');closeModal('conv-modal');loadConversations();}
+}
+function confirmClearConvs(){
+  if(!confirm('Clear ALL conversations? Cannot be undone.'))return;
+  fetch('/admin/api/conversations/clear',{method:'POST'})
+  .then(r=>r.json()).then(d=>{if(d.ok){toast('Cleared','success');loadConversations();}});
+}
+
+// ── LEADS ─────────────────────────────────────────────
+async function loadLeads(){
+  const r=await fetch('/admin/api/leads');
+  const leads=await r.json();
+  document.getElementById('leads-count-badge').textContent=leads.length+' leads';
+  const tb=document.getElementById('leads-tbody');
+  if(!leads.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text4)">No leads captured yet.<br>Enable collection in Bot Config → User Data Collection.</td></tr>';
+    return;
+  }
+  tb.innerHTML=leads.map((l,i)=>`<tr>
+    <td style="color:var(--text4)">${i+1}</td>
+    <td style="font-weight:600">${esc(l.name||'—')}</td>
+    <td style="font-family:var(--mono)">${esc(l.phone||'—')}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${esc((l.session_id||'').slice(0,14))}…</td>
+    <td>${esc(String(l.message_count||0))}</td>
+    <td style="color:var(--text3)">${fmtDateTime(l.captured_at)}</td>
+  </tr>`).join('');
+}
+function confirmClearLeads(){
+  if(!confirm('Clear ALL leads? Cannot be undone.'))return;
+  fetch('/admin/api/leads/clear',{method:'POST'})
+  .then(r=>r.json()).then(d=>{if(d.ok){toast('Leads cleared','success');loadLeads();}});
+}
+
+// ── PRICES ────────────────────────────────────────────
+let ALL_PRICES = {};
+let EDIT_PRICE_NAME = '';
+ 
+async function loadPrices(){
+  const r = await fetch('/admin/api/prices');
+  ALL_PRICES = await r.json();
+  const count = Object.keys(ALL_PRICES).length;
+  document.getElementById('prices-count-badge').textContent = count + ' products';
+  filterPrices();
+}
+ 
+function filterPrices(){
+  const q = (document.getElementById('prices-search').value||'').toLowerCase();
+  const entries = Object.entries(ALL_PRICES).filter(([name])=>!q||name.toLowerCase().includes(q));
+  const tb = document.getElementById('prices-tbody');
+  if(!entries.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text4)">No products found</td></tr>';
+    return;
+  }
+  // Load override list to show which are customised
+  fetch('/admin/api/prices').then(r=>r.json()).then(overrides=>{
+    tb.innerHTML = entries.map(([name, data])=>{
+      const isOverride = !!(data.price_usd === undefined || overrides[name]?.price_inr !== undefined);
+      return `<tr>
+        <td style="font-weight:600;max-width:220px" title="${esc(name)}">${esc(name)}</td>
+        <td style="font-weight:700;color:var(--green)">${esc(data.price_inr||'—')}</td>
+        <td style="color:var(--text3);font-size:12px">${esc(data.price_range_inr||'—')}</td>
+        <td style="font-family:var(--mono);font-size:11.5px;color:var(--text4)">$${data.price_usd||0}</td>
+        <td><span class="badge ${isOverride?'badge-cont':'badge-no'}">${isOverride?'✏️ Override':'Default'}</span></td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="openEditPrice('${esc(name)}')">Edit</button>
+        </td>
+      </tr>`;
+    }).join('');
+  });
+}
+ 
+function openEditPrice(name){
+  EDIT_PRICE_NAME = name;
+  const data = ALL_PRICES[name] || {};
+  document.getElementById('ep-name').value         = name;
+  document.getElementById('ep-display-name').value = name;
+  document.getElementById('ep-price-inr').value    = data.price_inr || '';
+  document.getElementById('ep-price-range').value  = data.price_range_inr || '';
+  document.getElementById('ep-price-usd').value    = data.price_usd || 0;
+  document.getElementById('edit-price-title').textContent = 'Edit Price — ' + name.slice(0,40);
+  openModal('edit-price-modal');
+}
+ 
+async function savePriceEdit(){
+  const name  = document.getElementById('ep-name').value;
+  const price = document.getElementById('ep-price-inr').value.trim();
+  const range = document.getElementById('ep-price-range').value.trim();
+  const usd   = parseInt(document.getElementById('ep-price-usd').value)||0;
+  if(!price){ toast('Price (₹) is required','error'); return; }
+  const r = await fetch('/admin/api/prices/update',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name, price_inr: price, price_range_inr: range, price_usd: usd})
+  });
+  const d = await r.json();
+  if(d.ok){ toast('Price saved ✓','success'); closeModal('edit-price-modal'); loadPrices(); }
+  else toast(d.message,'error');
+}
+ 
+async function resetPriceOverride(){
+  const name = document.getElementById('ep-name').value;
+  if(!confirm(`Reset "${name}" to default USD-based price?`)) return;
+  const r = await fetch('/admin/api/prices/delete',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name})
+  });
+  const d = await r.json();
+  if(d.ok){ toast('Reset to default','success'); closeModal('edit-price-modal'); loadPrices(); }
+}
+ 
+// ── SERVICE CENTERS ───────────────────────────────────
+let ALL_SC = [];
+let EDIT_SC_IDX = -1;
+ 
+async function loadServiceCenters(){
+  const r = await fetch('/admin/api/service-centers');
+  ALL_SC  = await r.json();
+  document.getElementById('sc-count-badge').textContent = ALL_SC.length + ' centres';
+  renderScTable(ALL_SC);
+}
+ 
+function renderScTable(data){
+  const tb = document.getElementById('sc-tbody');
+  if(!data.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text4)">No service centers found</td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map((sc,i)=>`<tr>
+    <td style="font-weight:700">${esc(sc.name||'')}</td>
+    <td>${esc(sc.city||'')}</td>
+    <td style="color:var(--text3)">${esc(sc.state||'')}</td>
+    <td style="font-family:var(--mono);font-size:11.5px">${esc(sc.phone||'')}</td>
+    <td style="color:var(--blue)">${sc.email?`<a href="mailto:${esc(sc.email)}" style="color:var(--blue)">${esc(sc.email)}</a>`:''}</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-outline btn-sm" onclick="openEditSc(${i})">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSc(${i})">Del</button>
+    </div></td>
+  </tr>`).join('');
+}
+ 
+function openAddScModal(){ openModal('add-sc-modal'); }
+ 
+async function saveNewSc(){
+  const name = document.getElementById('asc-name').value.trim();
+  const city = document.getElementById('asc-city').value.trim();
+  const addr = document.getElementById('asc-address').value.trim();
+  if(!name||!city){ toast('Name and City are required','error'); return; }
+  const fields = {
+    name, type: document.getElementById('asc-type').value,
+    address: addr, city,
+    state:   document.getElementById('asc-state').value,
+    phone:   document.getElementById('asc-phone').value,
+    email:   document.getElementById('asc-email').value,
+  };
+  const r = await fetch('/admin/api/service-centers/add',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(fields)
+  });
+  const d = await r.json();
+  if(d.ok){
+    toast('Service center added ✓','success');
+    closeModal('add-sc-modal');
+    ['asc-name','asc-address','asc-city','asc-state','asc-phone','asc-email'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    loadServiceCenters();
+  } else toast(d.message,'error');
+}
+ 
+function openEditSc(idx){
+  EDIT_SC_IDX = idx;
+  const sc  = ALL_SC[idx];
+  const fields = ['name','type','address','city','state','phone','email'];
+  document.getElementById('edit-sc-body').innerHTML = `
+    <input type="hidden" id="esc-idx" value="${idx}"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    ${fields.map(k=>`
+      <div class="field" style="${k==='address'?'grid-column:1/-1':''}">
+        <label>${k.charAt(0).toUpperCase()+k.slice(1)}</label>
+        ${k==='address'
+          ?`<textarea id="esc_${k}" rows="2">${esc(sc[k]||'')}</textarea>`
+          :`<input type="text" id="esc_${k}" value="${esc(sc[k]||'')}"/>`}
+      </div>`).join('')}
+    </div>`;
+  openModal('edit-sc-modal');
+}
+ 
+async function saveScEdit(){
+  const idx    = parseInt(document.getElementById('esc-idx').value);
+  const fields = {};
+  ['name','type','address','city','state','phone','email'].forEach(k=>{
+    const el = document.getElementById('esc_'+k);
+    if(el) fields[k] = el.value;
+  });
+  const r = await fetch('/admin/api/service-centers/update',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({index: idx, fields})
+  });
+  const d = await r.json();
+  if(d.ok){ toast('Saved ✓','success'); closeModal('edit-sc-modal'); loadServiceCenters(); }
+  else toast(d.message,'error');
+}
+ 
+async function deleteSc(idx){
+  if(!confirm(`Delete "${ALL_SC[idx]?.name}"?`)) return;
+  const r = await fetch('/admin/api/service-centers/delete',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({index: idx})
+  });
+  const d = await r.json();
+  if(d.ok){ toast('Deleted','success'); loadServiceCenters(); }
+  else toast(d.message,'error');
+}
+// ── HELPERS ───────────────────────────────────────────
+function esc(s){
+  if(!s)return'';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmtTime(iso){
+  if(!iso)return'—';
+  try{return new Date(iso).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}catch{return iso.slice(11,16);}
+}
+function fmtDate(iso){
+  if(!iso)return'—';
+  try{return new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}catch{return iso.slice(0,10);}
+}
+function fmtDateTime(iso){
+  if(!iso)return'—';
+  try{return new Date(iso).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return iso;}
+}
+</script>
+<script>
+
+async function checkAdminAuth(){
+  try{
+    const res = await fetch('/admin/check-auth')
+    const data = await res.json()
+
+    if(data.authenticated){
+      document.getElementById('loginOverlay').style.display = 'none'
+      document.getElementById('adminShell').style.display = 'flex'
+    }else{
+      document.getElementById('loginOverlay').style.display = 'flex'
+      document.getElementById('adminShell').style.display = 'none'
+    }
+
+  }catch(err){
+    console.error(err)
+  }
+}
+
+async function adminLogin(){
+
+  const username = document.getElementById('loginUsername').value
+  const password = document.getElementById('loginPassword').value
+
+  const errorEl = document.getElementById('loginError')
+
+  errorEl.style.display = 'none'
+
+  try{
+
+    const res = await fetch('/admin/login',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        username,
+        password
+      })
+    })
+
+    const data = await res.json()
+
+    if(data.success){
+
+      document.getElementById('loginOverlay').style.display = 'none'
+      document.getElementById('adminShell').style.display = 'flex'
+
+    }else{
+      errorEl.style.display = 'block'
+    }
+
+  }catch(err){
+    console.error(err)
+    errorEl.style.display = 'block'
+  }
+}
+
+checkAdminAuth()
+
+</script>
+</body>
+</html>

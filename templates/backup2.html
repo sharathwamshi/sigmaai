@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sigma Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f9f9f9;--bg3:#f3f3f3;--bg4:#ebebeb;
+  --border:#e8e8e8;--border2:#d4d4d4;
+  --text1:#0a0a0a;--text2:#404040;--text3:#717171;--text4:#a0a0a0;
+  --black:#0a0a0a;--black2:#1a1a1a;
+  --user-bubble:#0a0a0a;--user-text:#ffffff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-b:#bbf7d0;
+  --purple:#7c3aed;--purple-bg:#faf5ff;--purple-b:#ddd6fe;
+  --amazon:#c45500;--amazon-bg:#fff7ed;--amazon-b:#fed7aa;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --radius:10px;--radius-sm:7px;--radius-xs:5px;
+  --header-h:58px;--max-w:780px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);font-size:14.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* HEADER */
+.header{
+  height:var(--header-h);background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;flex-shrink:0;position:relative;z-index:10;
+}
+.header-logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-decoration:none
+}
+.header-logo-img{height:28px;width:auto;display:block}
+.header-logo-sep{width:1px;height:20px;background:var(--border2)}
+.header-logo-name{
+  font-family: "Times New Roman", Georgia, serif;
+  font-size:20px;
+  font-weight:500;
+  letter-spacing:.08em;
+  color:#111;
+  line-height:1;
+  white-space:nowrap;
+  text-transform:uppercase;
+}
+.header-logo-tag{font-size:10px;font-weight:600;color:#fff;background:var(--black);padding:2px 8px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:8px}
+
+/* .side-logo-mark{
+  width:30px;
+  height:30px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAACwCAYAAAB4m4sQAAAACXBIWXMAAAsSAAALEgHS3X78AAAFKUlEQVR4nO3dS27bQBCF4T8aA7QJ7ZL2QH4QF5QH8QG8QF4QF8QF9QG8QF6QF5QH8QF8QF0m6lJQvQxq1iW9e1lYJj8n7nqV2f4x8d2ZkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwZl7Y8v4v8v6Y9f9Lx8z9j6v7j0v7b8r8m9d7x6v7h0f7f8o8l9f7w6v7f0P7d8n8k9d7v6v7e0f7c8m8j9d7u6v7d0P7b8l8i9d7t6v7c0f7a8k8h9d7s6v7b0P7Z8j8g9d7r6v7a0f7Y8i8f9d7q6v7Z0P7X8h8e9d7p6v7Y0f7W8g8d9d7o6v7X0P7V8f8c9d7n6v7W0f7U8e8b9d7m6v7V0P7T8d8a9d7l6v7U0f7S8c8Z9d7k6v7T0P7R8b8Y9d7j6v7S0f7Q8a8X9d7i6v7R0P7P8Z8W9d7h6v7Q0f7O8Y8V9d7g6v7P0P7N8X8U9d7f6v7O0f7M8W8T9d7e6v7N0P7L8V8S9d7d6v7M0f7K8U8R9d7c6v7L0P7J8T8Q9d7b6v7K0f7I8S8P9d7a6v7J0P7H8R8O9d7Z6v7I0f7G8Q8N9d7Y6v7H0P7F8P8M9d7X6v7G0f7E8O8L9d7W6v7F0P7D8N8K9d7V6v7E0f7C8M8J9d7U6v7D0P7B8L8I9d7T6v7C0f7A8K8H9d7S6v7B0P698J8G9d7R6v7A0P688I8F9d7Q6v796P678H8E9d7P6v786P668G8D9d7O6v776P658F8C9d7N6v766P648E8B9d7M6v756P638D8A9d7L6v746P628C89d7K6v736P618B88d7J6v726P608A87d7I6v716P5/9AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgJ8B6p4wZ2cB6jQAAAAASUVORK5CYII=");
+} */
+
+/* =========================================================
+   SIGMA CUSTOM LOGO
+   Replace the existing .side-logo-mark CSS with this.
+   Uses the uploaded logo image directly.
+   ========================================================= */
+.side-logo-mark{
+  width:30px;
+  height:30px;
+  flex-shrink:0;
+  display:block;
+  background-image:url("/static/logo.png");
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+}
+/* OFFER BANNER */
+.offer-banner{
+  background:var(--black);color:#fff;
+  text-align:center;font-size:12.5px;font-weight:500;
+  padding:7px 20px;flex-shrink:0;
+  display:none;
+}
+
+/* NEW CONV BUTTON */
+.btn-new-conv{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;background:var(--black);color:#ffffff;
+  border:none;border-radius:var(--radius-sm);
+  font-family:var(--font);font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:background .15s,transform .1s;white-space:nowrap;
+}
+.btn-new-conv:hover{background:var(--black2)}
+.btn-new-conv:active{transform:scale(.97)}
+.btn-icon-sm{
+  width:32px;height:32px;background:transparent;border:1px solid var(--border);
+  border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;
+  color:var(--text3);cursor:pointer;text-decoration:none;transition:all .15s;
+}
+.btn-icon-sm:hover{background:var(--bg3);border-color:var(--border2);color:var(--text1)}
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:20px;font-size:11px;color:var(--text3);font-weight:500;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse-dot 2.5s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MESSAGES */
+.messages{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:6px}
+.messages::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+.messages-inner{max-width:var(--max-w);margin:0 auto;padding:32px 20px 32px}
+
+/* WELCOME */
+.welcome{padding-bottom:8px;animation:fade-up .45s ease}
+.welcome-hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
+.welcome-avatar{
+  width:46px;height:46px;
+  /* background:var(--black); */
+  border-radius:11px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.welcome-avatar img{height:24px;filter:brightness(0) invert(1)}
+.welcome-title{font-size:22px;font-weight:700;color:var(--text1);line-height:1.25;letter-spacing:-.02em}
+.welcome-subtitle{font-size:13px;color:var(--text3);margin-top:3px}
+.welcome-desc{font-size:14.5px;color:var(--text2);line-height:1.7;margin-bottom:6px;max-width:640px}
+.welcome-desc strong{color:var(--text1);font-weight:600}
+.welcome-divider{height:1px;background:var(--border);margin:20px 0}
+.welcome-examples-label{font-size:11px;font-weight:700;color:var(--text4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.welcome-examples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.eg{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;text-align:left;
+}
+.eg:hover{background:var(--bg);border-color:var(--black);box-shadow:0 0 0 1px var(--black)}
+.eg-icon{font-size:17px;flex-shrink:0}
+.eg-wrap{flex:1}
+.eg-title{font-size:12.5px;font-weight:700;color:var(--text1);margin-bottom:2px;display:block}
+.eg-desc{font-size:12px;color:var(--text3);line-height:1.4}
+.welcome-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:11.5px;color:var(--text3);font-weight:500}
+
+/* MESSAGES */
+.msg-row{display:flex;gap:12px;margin-bottom:28px;animation:fade-up .25s ease}
+.msg-row.user{flex-direction:row-reverse}
+.av{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:12px;font-weight:700}
+.av-bot{
+  /* background:var(--black); */
+  overflow:hidden}
+.av-bot img{height:16px;filter:brightness(0) invert(1)}
+.av-user{background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.msg-body{flex:1;min-width:0}
+.msg-row.user .msg-body{display:flex;flex-direction:column;align-items:flex-end}
+.bubble{border-radius:var(--radius);padding:11px 15px;font-size:14px;line-height:1.65}
+.bubble.user{background:var(--user-bubble);color:var(--user-text);max-width:80%;border-bottom-right-radius:3px}
+.bubble.bot{background:transparent;padding:3px 0;max-width:100%;color:var(--text2)}
+.bubble.bot p{margin-bottom:8px}.bubble.bot p:last-child{margin-bottom:0}
+.bubble.bot strong{color:var(--text1)}
+.msg-time{font-size:10.5px;color:var(--text4);margin-top:5px;display:flex;align-items:center;gap:5px}
+.msg-row.user .msg-time{justify-content:flex-end}
+
+/* SECTION LABEL */
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text4);
+  text-transform:uppercase;margin:14px 0 8px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* PRODUCT GRID */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(224px,1fr));gap:10px;margin-bottom:4px}
+.pcard{
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;transition:box-shadow .18s,transform .18s,border-color .18s;cursor:default;
+}
+.pcard:hover{box-shadow:0 6px 24px rgba(0,0,0,.10);transform:translateY(-2px);border-color:var(--border2)}
+
+/* IMAGE AREA — shows real image if available, else placeholder */
+.pcard-img{
+  width:100%;height:138px;background:#fafafa;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;border-bottom:1px solid var(--border);
+}
+.pcard-img img.real-img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .3s;
+}
+.pcard-img img.placeholder-img{
+  width:68%;height:68%;object-fit:contain;
+  transition:transform .3s;opacity:.85;
+}
+.pcard:hover .pcard-img img{transform:scale(1.04)}
+
+/* line badges */
+.line-badge{position:absolute;top:8px;left:8px;padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.b-art{background:#0a0a0a;color:#fff}
+.b-contemporary{background:#1e3a5f;color:#fff}
+.b-sports{background:#4a2c0a;color:#fff}
+.b-cine{background:#2d1b4e;color:#fff}
+.b-camera{background:#1a1a1a;color:#ddd}
+.b-accessory{background:#163822;color:#fff}
+.b-default{background:#333;color:#fff}
+.amz-badge{position:absolute;bottom:7px;right:7px;background:var(--amazon-bg);border:1px solid var(--amazon-b);color:var(--amazon);font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.02em}
+
+.pcard-body{padding:12px 13px 13px}
+.pcard-name{font-size:12.5px;font-weight:700;color:var(--text1);line-height:1.3;margin-bottom:3px}
+.pcard-cat{font-size:11px;color:var(--text4);margin-bottom:8px}
+.pcard-specs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.spec{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-size:10.5px;color:var(--text2);font-family:var(--mono)}
+.pcard-reason{font-size:11.5px;color:var(--text3);line-height:1.4;margin-bottom:6px;font-style:italic}
+.pcard-features{font-size:11.5px;color:var(--text3);line-height:1.4;margin-bottom:10px}
+.pcard-footer{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-top:2px;padding-top:9px;border-top:1px solid var(--border)}
+.pcard-price{font-size:13px;font-weight:700;color:var(--green)}
+.pcard-actions{display:flex;gap:5px;align-items:center}
+.btn-view{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--text1);text-decoration:none;padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-xs);transition:all .15s;white-space:nowrap}
+.btn-view:hover{background:var(--black);color:#fff;border-color:var(--black)}
+.btn-amz{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--amazon);text-decoration:none;padding:5px 10px;background:var(--amazon-bg);border:1px solid var(--amazon-b);border-radius:var(--radius-xs);transition:all .15s;white-space:nowrap}
+.btn-amz:hover{background:#fde8cc;border-color:#f97316}
+
+/* PRICE SECTION */
+.price-section{background:var(--green-bg);border:1px solid var(--green-b);border-radius:var(--radius-sm);overflow:hidden;margin:10px 0}
+.acc-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none}
+.acc-header-left{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.acc-header.price-hdr .acc-header-left{color:var(--green)}
+.acc-header.dealer-hdr .acc-header-left{color:var(--purple)}
+.acc-chevron{transition:transform .2s}
+.acc-chevron.open{transform:rotate(180deg)}
+.price-body{padding:2px 14px 12px}
+.price-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.05);gap:8px;flex-wrap:wrap}
+.price-row:last-child{border-bottom:none}
+.price-platform{display:flex;align-items:center;gap:7px}
+.price-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.price-name{font-size:13px;font-weight:600;color:var(--text1)}
+.price-right{display:flex;align-items:center;gap:8px}
+.price-val{font-size:13.5px;font-weight:700;color:var(--green)}
+.price-status{font-size:10.5px;padding:2px 8px;border-radius:20px;background:#dcfce7;color:var(--green);font-weight:500;white-space:nowrap}
+.price-link{font-size:12px;font-weight:600;color:var(--black);text-decoration:none}
+.price-link:hover{text-decoration:underline}
+
+/* DEALER SECTION */
+.dealer-section{background:var(--purple-bg);border:1px solid var(--purple-b);border-radius:var(--radius-sm);overflow:hidden;margin:10px 0}
+.dealer-body{padding:2px 14px 12px}
+.dealer-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+.dealer-row:last-child{border-bottom:none}
+.dealer-icon{width:32px;height:32px;background:#ede9fe;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.dealer-info{flex:1}
+.dealer-name{font-size:12.5px;font-weight:700;color:var(--text1)}
+.dealer-sub{font-size:11px;color:var(--text3)}
+.dealer-link{font-size:12px;font-weight:600;color:var(--purple);text-decoration:none;white-space:nowrap}
+.dealer-link:hover{text-decoration:underline}
+.collapsible{display:none}
+.collapsible.open{display:block}
+
+/* THINKING */
+.thinking-row{display:flex;gap:12px;margin-bottom:26px;animation:fade-up .25s ease}
+.thinking-body{flex:1;padding:4px 0;display:flex;align-items:center;gap:12px}
+.wave{display:flex;align-items:center;gap:3px;height:18px}
+.w-bar{width:3px;border-radius:2px;background:var(--black);animation:wave-anim 1.1s ease-in-out infinite}
+.w-bar:nth-child(1){height:5px;animation-delay:.00s}
+.w-bar:nth-child(2){height:12px;animation-delay:.10s}
+.w-bar:nth-child(3){height:8px;animation-delay:.20s}
+.w-bar:nth-child(4){height:15px;animation-delay:.30s}
+.w-bar:nth-child(5){height:7px;animation-delay:.40s}
+.w-bar:nth-child(6){height:11px;animation-delay:.50s}
+@keyframes wave-anim{0%,100%{transform:scaleY(.4);opacity:.25}50%{transform:scaleY(1.2);opacity:1}}
+.thinking-label{font-size:13px;color:var(--text3);font-style:italic}
+.thinking-dots span{display:inline-block;animation:dot-anim 1.4s infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot-anim{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+/* INPUT */
+.input-area{flex-shrink:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 20px 16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;max-width:var(--max-w);margin:0 auto 10px}
+.chip{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);font-family:var(--font);cursor:pointer;transition:all .14s;white-space:nowrap;font-weight:500}
+.chip:hover{background:var(--black);border-color:var(--black);color:#fff}
+.input-wrap{max-width:var(--max-w);margin:0 auto}
+.input-box{display:flex;align-items:flex-end;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--radius);padding:10px 12px;transition:border-color .18s,box-shadow .18s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.input-box:focus-within{border-color:var(--black);box-shadow:0 0 0 3px rgba(0,0,0,.07)}
+#user-input{flex:1;background:transparent;border:none;outline:none;font-family:var(--font);font-size:14px;color:var(--text1);resize:none;line-height:1.5;max-height:160px;min-height:22px}
+#user-input::placeholder{color:var(--text4)}
+.input-btns{display:flex;align-items:center;margin-left:8px;flex-shrink:0;padding-bottom:1px}
+.btn-send{width:34px;height:34px;background:var(--black);border:none;border-radius:var(--radius-xs);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;transition:background .14s,transform .1s}
+.btn-send:hover{background:var(--black2)}
+.btn-send:active{transform:scale(.95)}
+.btn-send:disabled{background:var(--bg3);cursor:not-allowed;color:var(--text4)}
+.input-hint{text-align:center;font-size:11px;color:var(--text4);margin-top:8px}
+
+@keyframes fade-up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){
+  .header{padding:0 14px}
+  .messages-inner{padding:20px 14px 24px}
+  .input-area{padding:10px 14px 14px}
+  .welcome-examples{grid-template-columns:1fr}
+  .products-grid{grid-template-columns:1fr}
+  .header-logo-name{display:none}
+  .btn-new-conv span{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- OFFER BANNER -->
+<div class="offer-banner" id="offer-banner"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <a class="header-logo" href="https://sigmaindia.in/" target="_blank">
+   <div class="side-logo-mark"></div>
+    <div class="header-logo-sep"></div>
+    <span class="header-logo-name" id="brand-name">Sigma</span>
+    <span class="header-logo-tag">Assistant</span>
+  </a>
+  <div class="header-right">
+    <div class="status-badge">
+      <div class="status-dot"></div>
+        Active
+    </div>
+    <button class="btn-new-conv" onclick="resetChat()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>New Conversation</span>
+    </button>
+    <a class="btn-icon-sm" href="https://sigmaindia.in/" target="_blank" title="Visit sigmaindia.in">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+  </div>
+</header>
+
+<!-- MESSAGES -->
+<div class="messages" id="messages">
+  <div class="messages-inner" id="messages-inner">
+
+    <!-- WELCOME — text loaded from admin config on startup -->
+    <div class="welcome" id="welcome-screen">
+      <div class="welcome-hero">
+        <div class="welcome-avatar">
+        <div class="side-logo-mark"></div>
+        </div>
+        <div>
+          <div class="header-logo-name" id="welcome-title">Sigma Assistant</div>
+          <div class="welcome-subtitle">Powered by sigmaindia.in · Pursuit of Perfection</div>
+        </div>
+      </div>
+      <!-- Welcome message loaded from admin config -->
+      <p class="welcome-desc" id="welcome-main-msg" style="display:none"></p>
+
+      
+    </div>
+
+  </div>
+</div>
+
+<!-- INPUT AREA -->
+<div class="input-area">
+  <!-- Quick chips commented out as requested -->
+  <div class="chips" id="chips">
+    <button class="chip" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">💍 Wedding photography</button>
+    <button class="chip" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">🎬 Video / Vlog</button>
+    <button class="chip" onclick="sendMessage('Compact travel zoom lens for mirrorless')">✈️ Travel zoom</button>
+    <button class="chip" onclick="sendMessage('Sigma macro lens for product photography')">🔬 Macro lens</button>
+    <button class="chip" onclick="sendMessage('Show me dealers near me')">📷 Dealers</button>
+    <button class="chip" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">
+  🏆 Loyalty Program
+</button>
+  </div>
+ 
+  <div class="chips" id="chips" style="display:none"></div>
+  <div class="input-wrap">
+    <div class="input-box">
+      <textarea id="user-input"
+        placeholder="Ask about lenses, cameras, prices in ₹, dealers, compatibility…"
+        rows="1"></textarea>
+      <div class="input-btns">
+        <button class="btn-send" id="send-btn" onclick="submitMessage()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="input-hint">Sigma Assistant · sigmaindia.in · Verify prices with authorised dealers before purchase</div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+
+<!-- LEAD CAPTURE MODAL -->
+<div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:fade-up .25s ease;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:36px;height:36px;background:#0a0a0a;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:#0a0a0a">Stay Connected</div>
+        <div style="font-size:11.5px;color:#888">Sigma India · sigmaindia.in</div>
+      </div>
+      <button onclick="dismissLead()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;color:#aaa;font-size:22px;line-height:1;padding:0">&#215;</button>
+    </div>
+    <p id="lead-prompt-text" style="font-size:13.5px;color:#444;line-height:1.6;margin:14px 0"></p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:11.5px;font-weight:600;color:#555;display:block;margin-bottom:4px">Your Name</label>
+        <input id="lead-name" type="text" placeholder="Enter your name" style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:7px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='#0a0a0a'" onblur="this.style.borderColor='#e0e0e0'"/>
+      </div>
+      <div>
+        <label style="font-size:11.5px;font-weight:600;color:#555;display:block;margin-bottom:4px">Phone Number</label>
+        <input id="lead-phone" type="tel" placeholder="+91 XXXXX XXXXX" style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:7px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='#0a0a0a'" onblur="this.style.borderColor='#e0e0e0'"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="submitLead()" style="flex:1;padding:10px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .14s" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0a0a0a'">Submit</button>
+      <button onclick="dismissLead()" style="padding:10px 18px;background:#f3f3f3;color:#555;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUMMY PLACEHOLDER IMAGE -->
+<img id="dummy-img"
+  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjgwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iI2Y5ZjlmOSIvPjxjaXJjbGUgY3g9IjE0MCIgY3k9Ijc0IiByPSI0NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZThlOGU4IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSIxNDAiIGN5PSI3NCIgcj0iMjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2UwZTBlMCIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iNzQiIHI9IjEyIiBmaWxsPSIjZjBmMGYwIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iNzQiIHI9IjUiIGZpbGw9IiNjY2NjY2MiLz48dGV4dCB4PSIxNDAiIHk9IjEzNSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjYWFhYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5zaWdtYWluZGlhLmluPC90ZXh0Pjwvc3ZnPg=="
+  style="display:none" alt="placeholder"/>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   SIGMA AI ASSISTANT — Frontend JS
+   Image fix: use real img if _image set, else placeholder
+   ═══════════════════════════════════════════════════ */
+
+const DUMMY = document.getElementById('dummy-img').src;
+
+// Lead capture state
+let LEAD_CFG = { collect: false, gap: 3, prompt: '' };
+let userMsgCount = 0;
+let leadCaptured = false;
+let leadDismissed = false;
+
+// Load config on startup — welcome text comes from admin panel
+fetch('/config-public').then(r=>r.json()).then(cfg=>{
+  // Brand name
+  if (cfg.brand_name) {
+    document.getElementById('brand-name').textContent    = cfg.brand_name;
+    document.getElementById('welcome-title').textContent = cfg.brand_name;
+    document.title = cfg.brand_name;
+  }
+  // Welcome message set in admin — shown on first load
+  const mainMsg = document.getElementById('welcome-main-msg');
+  if (mainMsg) {
+    const txt = (cfg.welcome_message || '').trim();
+    if (txt) {
+      mainMsg.textContent = txt;
+      mainMsg.style.display = 'block';
+    }
+  }
+  // Offer banner
+  if (cfg.offer_banner && cfg.offer_banner.trim()) {
+    const ob = document.getElementById('offer-banner');
+    ob.textContent   = cfg.offer_banner;
+    ob.style.display = 'block';
+  }
+  // Lead capture config
+  LEAD_CFG.collect = !!cfg.collect_user_data;
+  LEAD_CFG.gap     = parseInt(cfg.user_data_message_gap) || 3;
+  LEAD_CFG.prompt  = cfg.collect_user_prompt || 'May I have your name and phone number so our team can assist you better?';
+  document.getElementById('lead-prompt-text').textContent = LEAD_CFG.prompt;
+}).catch(()=>{});
+
+// Textarea auto-resize
+const ta = document.getElementById('user-input');
+ta.addEventListener('input', function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,160)+'px';
+});
+ta.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitMessage();}
+});
+
+function submitMessage(){
+  const v=ta.value.trim(); if(!v)return;
+  ta.value=''; ta.style.height='auto';
+  sendMessage(v);
+}
+
+function sendMessage(msg){
+  hideWelcome(); hideChips();
+  addUserMsg(msg); showThinking(); setBusy(true);
+  userMsgCount++;
+  fetch('/chat',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:msg})
+  }).then(r=>r.json()).then(d=>{
+    removeThinking(); addBotMsg(d); setBusy(false);
+    if (LEAD_CFG.collect && !leadCaptured && !leadDismissed && userMsgCount > 0 && userMsgCount % LEAD_CFG.gap === 0) {
+      setTimeout(() => showLeadModal(), 900);
+    }
+  }).catch(()=>{
+    removeThinking();
+    addBotMsg({text:"Sorry, something went wrong. Please try again.",products:[],prices:[],dealers:[]});
+    setBusy(false);
+  });
+}
+
+function showLeadModal() {
+  const m = document.getElementById('lead-modal');
+  m.style.display = 'flex';
+  setTimeout(()=>document.getElementById('lead-name').focus(), 100);
+}
+function dismissLead() {
+  document.getElementById('lead-modal').style.display = 'none';
+  leadDismissed = true;
+}
+function submitLead() {
+  const name  = document.getElementById('lead-name').value.trim();
+  const phone = document.getElementById('lead-phone').value.trim();
+  if (!name && !phone) { dismissLead(); return; }
+  fetch('/save-lead',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name, phone})
+  }).then(()=>{
+    leadCaptured = true;
+    document.getElementById('lead-modal').style.display = 'none';
+    const inner = document.getElementById('messages-inner');
+    const row = document.createElement('div');
+    row.className='msg-row bot';
+    row.innerHTML=avatarBotHtml()+'<div class="msg-body"><div class="bubble bot"><p>Thank you'+(name?' '+name:'')+'! Our team will reach out to you shortly. Sigma India Loyalty Program: Register at sigmaindia.in for extended 3-year warranty. Gold members get 5% off next purchase.</p></div><div class="msg-time">'+nowTime()+' · Sigma AI Assistant</div></div>';
+    inner.appendChild(row); scrollBottom();
+  }).catch(()=>{ dismissLead(); });
+}
+
+function hideWelcome(){const w=document.getElementById('welcome-screen');if(w)w.style.display='none';}
+function hideChips(){document.getElementById('chips').style.display='none';}
+function setBusy(b){document.getElementById('send-btn').disabled=b;ta.disabled=b;}
+function scrollBottom(){const el=document.getElementById('messages');setTimeout(()=>el.scrollTop=el.scrollHeight,80);}
+function nowTime(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+
+function avatarBotHtml(){
+  return `<div class="av av-bot"><div class="side-logo-mark"></div></div>`;
+}
+
+function addUserMsg(text){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div');
+  row.className='msg-row user';
+  row.innerHTML=`<div class="av av-user">U</div>
+  <div class="msg-body">
+    <div class="bubble user">${esc(text)}</div>
+    <div class="msg-time">${nowTime()}</div>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+
+function showThinking(){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div');
+  row.className='thinking-row'; row.id='thinking-row';
+  row.innerHTML=`${avatarBotHtml()}
+  <div class="thinking-body">
+    <div class="wave">
+      <div class="w-bar"></div><div class="w-bar"></div>
+      <div class="w-bar"></div><div class="w-bar"></div>
+      <div class="w-bar"></div><div class="w-bar"></div>
+    </div>
+    <span class="thinking-label">Searching Sigma catalogue<span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span></span>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+function removeThinking(){const t=document.getElementById('thinking-row');if(t)t.remove();}
+
+function addBotMsg(data){
+  const inner=document.getElementById('messages-inner');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  let html='';
+  if(data.products&&data.products.length){
+    html+=`<div class="section-label">Products</div>`;
+    html+=buildGrid(data.products);
+  }
+  // if(data.text) html+=`<div class="bubble bot">${fmtText(data.text)}</div>`;
+
+// REPLACE your current patch with this safer version.
+// It fixes href values like:
+// http://localhost:5000/%22https://sigmaindia.in/loyalty-program/%22
+
+// PATCH: Clean malformed href attributes after fmtText()
+// Replace your existing block with this exact code.
+
+if (data.text) {
+  let formatted = fmtText(data.text);
+
+  // Convert escaped HTML entities back to actual HTML
+  formatted = formatted
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"');
+
+  // Fix href values wrapped in extra quotes:
+  // href="https://sigmaindia.in/loyalty-program/""
+  // href=""https://sigmaindia.in/loyalty-program/""
+  formatted = formatted.replace(
+    /href\s*=\s*(['"]+)(https?:\/\/[^'"]+)\1+/gi,
+    'href="$2"'
+  );
+
+  // Remove stray quotes before target=
+  // <a href="https://..." " target="_blank">
+  formatted = formatted.replace(
+    /"\s+target=/gi,
+    '" target='
+  );
+
+  html += `<div class="bubble bot">${formatted}</div>`;
+}
+  if(data.prices&&data.prices.length) html+=buildPrices(data.prices);
+  if(data.dealers&&data.dealers.length) html+=buildDealers(data.dealers);
+  if(data.service_centers&&data.service_centers.length)
+  html+=buildServiceCenters(data.service_centers);
+  row.innerHTML=`${avatarBotHtml()}
+  <div class="msg-body">
+    ${html}
+    <div class="msg-time">${nowTime()} · Sigma Assistant</div>
+  </div>`;
+  inner.appendChild(row); scrollBottom();
+}
+
+/* ─── PRODUCT GRID — IMAGE FIX ───────────────────────
+   If product._image is set (non-empty string from backend),
+   use it as a real full-cover image.
+   Otherwise fall back to the placeholder SVG.
+   ─────────────────────────────────────────────────── */
+function buildGrid(products){
+  const cards=products.map(p=>{
+    const line=(p.line||'').toLowerCase();
+    const cat=(p.category||'').toLowerCase();
+    const badge=
+      line.includes('art')             ? 'b-art'
+      :line.includes('contemporary')   ? 'b-contemporary'
+      :line.includes('sport')          ? 'b-sports'
+      :(line.includes('cine')||line.includes('ff')||line.includes('high speed')||line.includes('aizu')) ? 'b-cine'
+      :cat.includes('camera')          ? 'b-camera'
+      :cat.includes('access')          ? 'b-accessory'
+      :'b-default';
+    const specs=[];
+    if(p.focal_length&&p.focal_length!=='—') specs.push(p.focal_length);
+    if(p.aperture&&p.aperture!=='—') specs.push(p.aperture);
+    const mounts=(p.mounts||'').split(',').slice(0,2).join(', ');
+    const hasAmz=p.amazon_in&&p.amazon_in!=='null'&&p.amazon_in!=='None'&&p.amazon_in!=='';
+    const price=p.price_inr||p.price_range_inr||'';
+    const feats=(p.key_features||'').slice(0,100);
+
+    // ── IMAGE LOGIC ──────────────────────────────────
+    // _image is the URL path set by backend (e.g. /static/images/85mm_f1_4_dg_dn.jpg)
+    // or empty string if no image uploaded yet.
+    //${hasAmz?'<span class="amz-badge">Sigmai.in</span>':''}
+    const hasRealImg = p._image && p._image.trim() !== '';
+    const imgTag = hasRealImg
+      ? `<img src="${esc(p._image)}?t=${Date.now()}" class="real-img" alt="${esc(p.name||'')}"/>`
+      : `<img src="${DUMMY}" class="placeholder-img" alt="${esc(p.name||'')}"/>`;
+
+    return `<div class="pcard">
+      <div class="pcard-img">
+        ${imgTag}
+        <span class="line-badge ${badge}">${esc(p.line||p.category||'')}</span>
+       
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-name">${esc(p.name||'')}</div>
+        <div class="pcard-cat">${esc(p.category||'')}</div>
+        ${specs.length?`<div class="pcard-specs">
+          ${specs.map(s=>`<span class="spec">${esc(s)}</span>`).join('')}
+          ${mounts?`<span class="spec">⟳ ${esc(mounts)}</span>`:''}
+        </div>`:''}
+        ${p.reason?`<div class="pcard-reason">${esc(p.reason)}</div>`:''}
+        ${feats?`<div class="pcard-features">${esc(feats)}${(p.key_features||'').length>100?'…':''}</div>`:''}
+        <div class="pcard-footer">
+         <span class="pcard-price">${price ? 'MRP ' + esc(price) : ''}</span>
+          <div class="pcard-actions">
+            ${p.url?`<a href="https://sigmaindia.in/dealer-network/" target="_blank" class="btn-view">Dealer ↗</a>`:''}
+            ${hasAmz?`<a href="${esc(p.amazon_in)}" target="_blank" class="btn-amz">Amazon.in</a>`:''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="products-grid">${cards}</div>`;
+}
+
+function buildPrices(prices){
+  const id='pr-'+Date.now();
+  const rows=prices.map(p=>`
+  <div class="price-row">
+    <div class="price-platform"><div class="price-dot"></div><span class="price-name">${esc(p.platform||'')}</span></div>
+    <div class="price-right">
+      <span class="price-val">${esc(p.price||'')}</span>
+      ${p.status?`<span class="price-status">${esc(p.status)}</span>`:''}
+      ${p.url?`<a href="${esc(p.url)}" target="_blank" class="price-link">Shop →</a>`:''}
+    </div>
+  </div>`).join('');
+  return `<div class="price-section">
+  <div class="acc-header price-hdr" onclick="toggleAcc('${id}',this)">
+    <div class="acc-header-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Price Comparison — India (₹)
+    </div>
+    <svg class="acc-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="price-body collapsible open" id="${id}">${rows}</div>
+</div>`;
+}
+
+function buildDealers(dealers){
+  if(!dealers||!dealers.length) return '';
+  const id='dl-'+Date.now();
+
+  // Separate header (index 0) from actual dealer rows
+  const header  = dealers[0];
+  const dealerRows = dealers.slice(1);
+
+  // Build rows
+  const rows = dealerRows.map((d,i)=>{
+    const isHeader = !d.dealer_code && !d.address;
+    if(isHeader) return '';
+    const addr = d.address ? `<div style="font-size:11px;color:var(--text4);margin-top:2px;line-height:1.35">${esc(d.address)}</div>` : '';
+    const code = d.dealer_code ? `<span style="font-family:var(--mono);font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 6px;color:var(--text3)">${esc(d.dealer_code)}</span>` : '';
+    const sp   = d.sales_person ? `<div style="font-size:10.5px;color:var(--text4);margin-top:2px">📞 ${esc(d.sales_person)}</div>` : '';
+    return `<div class="dealer-row">
+      <div class="dealer-icon" style="font-size:13px;background:#f5f0ff">${(i%3===0)?'🏪':(i%3===1)?'📷':'🔭'}</div>
+      <div class="dealer-info" style="flex:1;min-width:0">
+        <div class="dealer-name">${esc(d.name||'')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+          ${code}
+          <span style="font-size:11px;color:var(--text3)">📍 ${esc(d.location||'')}</span>
+        </div>
+        ${addr}${sp}
+      </div>
+      ${d.url?`<a href="${esc(d.url)}" target="_blank" class="dealer-link" style="margin-left:8px;flex-shrink:0">↗</a>`:''}
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const headerLabel = esc(header.name || 'Authorised Dealer Network');
+  const subLabel    = esc(header.type || '');
+
+  return `<div class="dealer-section">
+  <div class="acc-header dealer-hdr" onclick="toggleAcc('${id}',this)">
+    <div class="acc-header-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>${headerLabel}</span>
+      ${subLabel?`<span style="font-size:10.5px;font-weight:400;color:var(--purple);margin-left:4px">(${subLabel})</span>`:''}
+    </div>
+    <svg class="acc-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="dealer-body collapsible open" id="${id}">
+    ${rows||'<div style="padding:12px;color:var(--text3);font-size:12.5px">No dealers found for this location. <a href="https://sigmaindia.in/dealer-network/" target="_blank" style="color:var(--purple)">Search all dealers →</a></div>'}
+  </div>
+</div>`;
+}
+
+function buildServiceCenters(centers){
+
+  if(!centers || !centers.length) return '';
+
+  const id='sc-'+Date.now();
+
+  const rows = centers.map((d,i)=>{
+
+    const addr = d.address
+      ? `<div style="font-size:11px;color:var(--text4);margin-top:2px;line-height:1.35">${esc(d.address)}</div>`
+      : '';
+
+    const phone = d.phone
+      ? `<div style="font-size:10.5px;color:var(--text4);margin-top:2px">📞 ${esc(d.phone)}</div>`
+      : '';
+
+    const email = d.email
+      ? `<div style="font-size:10.5px;color:var(--text4);margin-top:2px">✉️ ${esc(d.email)}</div>`
+      : '';
+
+    return `
+    <div class="dealer-row">
+
+      <div class="dealer-icon"
+           style="font-size:13px;background:#f5f0ff">
+
+        ${(i%3===0)?'🛠️':(i%3===1)?'🔧':'📷'}
+
+      </div>
+
+      <div class="dealer-info"
+           style="flex:1;min-width:0">
+
+        <div class="dealer-name">
+          ${esc(d.name||'')}
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+
+          <span style="font-size:11px;color:var(--text3)">
+            📍 ${esc(d.location||'')}
+          </span>
+
+        </div>
+
+        ${addr}
+        ${phone}
+        ${email}
+
+      </div>
+
+      ${d.url
+        ? `<a href="${esc(d.url)}"
+              target="_blank"
+              class="dealer-link"
+              style="margin-left:8px;flex-shrink:0">↗</a>`
+        : ''}
+
+    </div>`;
+
+  }).join('');
+
+  return `<div class="dealer-section">
+
+    <div class="acc-header dealer-hdr"
+         onclick="toggleAcc('${id}',this)">
+
+      <div class="acc-header-left">
+
+        <svg width="14"
+             height="14"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5">
+
+          <path d="M14.7 6.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4-1.4l7-7a1 1 0 011.4 0z"/>
+          <path d="M16 3l5 5"/>
+          <path d="M2 22l6-2 12-12-4-4L4 16 2 22z"/>
+
+        </svg>
+
+        <span>Authorised Service Centers</span>
+
+      </div>
+
+      <svg class="acc-chevron open"
+           width="14"
+           height="14"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="2.5">
+
+        <polyline points="6 9 12 15 18 9"/>
+
+      </svg>
+
+    </div>
+
+    <div class="dealer-body collapsible open"
+         id="${id}">
+
+      ${rows || `
+      <div style="padding:12px;color:var(--text3);font-size:12.5px">
+        No service centers found.
+      </div>`}
+
+    </div>
+
+  </div>`;
+}
+function toggleAcc(id,hdr){
+  const body=document.getElementById(id);
+  const chev=hdr.querySelector('.acc-chevron');
+  if(!body)return;
+  body.classList.toggle('open');
+  if(chev)chev.classList.toggle('open');
+}
+
+function fmtText(t){
+  let s=esc(t);
+  s=s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\*(.*?)\*/g,'<em>$1</em>');
+  s=s.replace(/`(.*?)`/g,`<code style="background:#f3f3f3;padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px">$1</code>`);
+  const paras=s.split('\n\n').filter(p=>p.trim());
+  if(!paras.length)return '<p>Here are the results.</p>';
+  return paras.map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+}
+
+function esc(s){
+  if(!s)return'';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function resetChat(){
+  fetch('/reset',{method:'POST'}).then(()=>{
+    // Re-fetch config so welcome message is always up to date
+    fetch('/config-public').then(r=>r.json()).then(cfg=>{
+      const brand   = cfg.brand_name || 'Sigma';
+      const welcome = (cfg.welcome_message || '').trim();
+      const LOGO_B64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wAARCABQAFADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AIyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//Z";
+      document.getElementById('messages-inner').innerHTML=`
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-hero">
+         <div class="welcome-avatar">
+  <div class="side-logo-mark"></div>
+</div>
+          <div>
+            <div class="welcome-title" id="welcome-title">${esc(brand)}</div>
+            <div class="welcome-subtitle">Powered by Claude · sigmaindia.in · Pursuit of Perfection</div>
+          </div>
+        </div>
+        ${welcome ? `<p class="welcome-desc" id="welcome-main-msg">${esc(welcome)}</p>` : ''}
+      </div>`;
+      // Reset lead state for new conversation
+      userMsgCount  = 0;
+      leadCaptured  = false;
+      leadDismissed = false;
+    }).catch(()=>{
+      document.getElementById('messages-inner').innerHTML=
+        '<div class="welcome" id="welcome-screen"><div class="welcome-hero"><div class="welcome-avatar"><div class="side-logo-mark"></div></div><div><div class="welcome-title">Sigma AI Assistant</div><div class="welcome-subtitle">Powered by Claude · sigmaindia.in</div></div></div></div>';
+    });
+  });
+}
+</script>
+</body>
+</html>
