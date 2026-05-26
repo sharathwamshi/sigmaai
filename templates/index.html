@@ -51,16 +51,24 @@ body {
 .header-left {
   display: flex; align-items: center; gap: 18px;
 }
-/* Sigma wordmark — spaced caps, serif */
+@font-face {
+  font-family: 'SigmaSerif';
+  src: url('/static/SigmaSerif-Headline.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Sigma wordmark — custom serif font */
 .sigma-wordmark {
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: .22em;
+  font-family: 'SigmaSerif', var(--font-serif);
+  font-size: 22px;
+  font-weight: normal;
+  letter-spacing: .04em;
   color: var(--black);
-  text-transform: uppercase;
+  text-transform: none;
   text-decoration: none;
   white-space: nowrap;
+  line-height: 1;
 }
 .header-sep { width: 1px; height: 22px; background: var(--border); }
 .header-badge {
@@ -181,10 +189,10 @@ body {
 
 /* ── ASSISTANT CARD ─────────────────────────────── */
 .assistant-section-label {
-  font-family: var(--font-body);
-  font-size: 10px; font-weight: 700;
-  letter-spacing: .2em; color: var(--text-label);
-  text-transform: uppercase;
+  font-family: 'SigmaSerif', var(--font-serif);
+  font-size: 15px; font-weight: normal;
+  letter-spacing: .04em; color: var(--text-label);
+  text-transform: none;
   margin-bottom: 12px;
 }
 .assistant-card {
@@ -431,11 +439,16 @@ body {
 <!-- ── HEADER ────────────────────────── -->
 <header class="header">
   <div class="header-left">
-    <!-- <img src="/static/logo.png" alt="Sigma" style="height:36px;width:auto;display:block;object-fit:contain;" onerror="this.style.display='none'"/> -->
+    <!-- Old logo commented out
+    <img src="/static/logo.png" alt="Sigma" style="height:36px;width:auto;display:block;object-fit:contain;" onerror="this.style.display='none'"/>
+    -->
+    <!-- text_logo.png commented out
+    <img src="/static/text_logo.png" alt="Sigma" style="height:40px;width:auto;display:block;object-fit:contain;" onerror="this.style.display='none'"/>
+    -->
     <a class="sigma-wordmark" href="https://sigmaindia.in/" target="_blank">SIGMA</a>
     <div class="header-sep"></div>
     <div class="header-badge">
-      AI Assistant
+      Assistant
       <div class="header-badge-dot"></div>
       <span class="header-badge-label">ONLINE</span>
     </div>
@@ -482,7 +495,7 @@ body {
       </div>
 
       <!-- Assistant welcome card -->
-      <div class="assistant-section-label">Sigma Assistant</div>
+      <div class="assistant-section-label">SIGMA Assistant</div>
       <div class="assistant-card" id="welcome-main-msg">
         Welcome to Sigma India. I can help you find the perfect lens or camera for your creative vision — whether you're shooting weddings, wildlife, or cinematic video. What are you working on?
       </div>
