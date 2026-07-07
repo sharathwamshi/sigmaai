@@ -28,7 +28,7 @@
   --font-serif: 'SigmaSerif', 'EB Garamond', Georgia, serif;
   --font-body:  'SigmaSerif', 'EB Garamond', Georgia, serif;
   --max-w: 760px;
-  --header-h: 62px;
+  --header-h: 50px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,16 +51,16 @@ body {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 28px; flex-shrink: 0; z-index: 20;
+  padding: 0 24px; flex-shrink: 0; z-index: 20;
 }
 .header-left {
-  display: flex; align-items: center; gap: 18px;
+  display: flex; align-items: center; gap: 14px;
 }
 
 /* Sigma wordmark — custom serif font */
 .sigma-wordmark {
   font-family: 'SigmaSerif', var(--font-serif);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: normal;
   letter-spacing: .04em;
   color: var(--black);
@@ -69,20 +69,30 @@ body {
   white-space: nowrap;
   line-height: 1;
 }
-.header-sep { width: 1px; height: 22px; background: var(--border); }
+.header-sep { width: 1px; height: 18px; background: var(--border); }
 .header-badge {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 7px;
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 300;
+  font-weight: normal;
   color: var(--text-body);
-  letter-spacing: .03em;
+  letter-spacing: .04em;
+  line-height: 1;
 }
 .header-badge-dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  flex-shrink: 0;
   animation: pulse-dot 2.5s ease-in-out infinite;
 }
-.header-badge-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--green); text-transform: uppercase; }
+.header-badge-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: normal;
+  letter-spacing: .12em;
+  color: var(--green);
+  text-transform: uppercase;
+  line-height: 1;
+}
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 .header-right { display: flex; align-items: center; gap: 10px; }
@@ -104,15 +114,15 @@ body {
 .messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 .messages-inner {
   max-width: var(--max-w); margin: 0 auto;
-  padding: 0 24px 32px;
+  padding: 0 24px 16px;
 }
 
 /* ── WELCOME SCREEN ─────────────────────────────── */
-.welcome { padding-top: 20px; animation: fade-up .5s ease; }
+.welcome { padding-top: 32px; animation: fade-up .5s ease; }
 
 .pursuit-label {
   font-family: var(--font-body);
-  font-size: 11px; font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: .25em;
   color: var(--text-label);
   text-transform: uppercase;
@@ -122,7 +132,7 @@ body {
 
 .hero-headline {
   font-family: var(--font-serif);
-  font-size: clamp(34px, 6vw, 52px);
+  font-size: clamp(32px, 5vw, 48px);
   font-weight: 400;
   color: var(--text-hero);
   line-height: 1.1;
@@ -133,19 +143,18 @@ body {
 
 .hero-sub {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 300;
   color: var(--text-sub);
   text-align: center;
-  line-height: 1.65;
-  max-width: 400px;
-  margin: 0 auto 24px;
+  line-height: 1.55;
+  max-width: 480px;
+  margin: 0 auto 20px;
 }
 
-/* ── DIVIDER ────────────────────────────────────── */
 .section-divider {
   display: flex; align-items: center; gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .section-divider::before,
 .section-divider::after {
@@ -153,7 +162,7 @@ body {
 }
 .section-divider-label {
   font-family: var(--font-body);
-  font-size: 10px; font-weight: 700;
+  font-size: 9px; font-weight: 700;
   letter-spacing: .25em;
   color: var(--text-label);
   text-transform: uppercase;
@@ -162,22 +171,27 @@ body {
 
 /* ── TOPIC CHIPS ────────────────────────────────── */
 .topics {
-  display: flex; flex-wrap: wrap; justify-content: center;
-  gap: 8px; margin-bottom: 24px;
+  display: flex; flex-wrap: nowrap; justify-content: stretch;
+  gap: 8px; margin-bottom: 22px;
+  padding: 4px 0;
+  width: 100%;
 }
+.topics::-webkit-scrollbar { display: none; }
 .topic-btn {
-  padding: 11px 20px;
+  padding: 11px 10px;
   background: var(--bg-card);
   border: 1px solid var(--border-btn);
   border-radius: 3px;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--text-body);
   cursor: pointer;
   transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
   white-space: nowrap;
   letter-spacing: .01em;
+  flex: 1;
+  text-align: center;
 }
 .topic-btn:hover {
   background: var(--bg-white);
@@ -189,21 +203,21 @@ body {
 /* ── ASSISTANT CARD ─────────────────────────────── */
 .assistant-section-label {
   font-family: 'SigmaSerif', var(--font-serif);
-  font-size: 15px; font-weight: normal;
+  font-size: 14px; font-weight: normal;
   letter-spacing: .04em; color: var(--text-label);
   text-transform: none;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .assistant-card {
   background: var(--bg-white);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 18px 22px;
+  padding: 16px 20px;
   font-family: var(--font-body);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 300;
   color: var(--text-body);
-  line-height: 1.7;
+  line-height: 1.65;
   animation: fade-up .5s .1s both ease;
 }
 
@@ -236,10 +250,35 @@ body {
 
 .msg-time {
   font-size: 10px; color: var(--text-sub);
-  margin-top: 5px; display: flex; align-items: center; gap: 5px;
+  margin-top: 6px; display: flex; align-items: center; gap: 5px;
   font-family: var(--font-body); font-weight: 300; letter-spacing: .02em;
+  flex-wrap: wrap;
 }
 .msg-row.user .msg-time { justify-content: flex-end; }
+
+/* Info icon on bot messages — always visible */
+.msg-info-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px 3px 7px;
+  color: var(--text-sub);
+  cursor: pointer;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  opacity: 1;
+  transition: color .15s, background .15s, border-color .15s;
+  flex-shrink: 0;
+  margin-left: 4px;
+  font-size: 10.5px;
+  font-family: var(--font-body);
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.msg-info-btn:hover {
+  color: var(--text-hero);
+  background: var(--bg-white);
+  border-color: var(--black);
+}
 
 /* ── THINKING ───────────────────────────────────── */
 .thinking-row {
@@ -276,15 +315,15 @@ body {
   flex-shrink: 0;
   background: var(--bg);
   border-top: 1px solid var(--border);
-  padding: 8px 24px 10px;
+  padding: 10px 24px 12px;
 }
 .input-hint-top {
   text-align: center;
   font-family: var(--font-body);
-  font-size: 11px; font-weight: 300;
+  font-size: 10.5px; font-weight: 300;
   color: var(--text-sub);
   letter-spacing: .04em;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 .input-wrap { max-width: var(--max-w); margin: 0 auto; }
 .input-box {
@@ -292,7 +331,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-btn);
   border-radius: 4px;
-  padding: 9px 12px;
+  padding: 9px 11px;
   transition: border-color .18s, box-shadow .18s;
 }
 .input-box:focus-within {
@@ -308,10 +347,10 @@ body {
 }
 #user-input::placeholder { color: var(--text-sub); }
 .btn-send {
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   background: var(--black); border: none; border-radius: 3px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  color: #fff; flex-shrink: 0; margin-left: 10px;
+  color: #fff; flex-shrink: 0; margin-left: 9px;
   transition: background .14s, transform .1s;
 }
 .btn-send:hover { background: #2a2a28; }
@@ -321,10 +360,10 @@ body {
 .input-footer {
   text-align: center;
   font-family: var(--font-body);
-  font-size: 10.5px; font-weight: 300;
+  font-size: 10px; font-weight: 300;
   color: var(--text-sub); letter-spacing: .1em;
   text-transform: uppercase;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 /* ── PRODUCTS / PRICES / DEALERS ─────────────────── */
@@ -455,6 +494,14 @@ body {
     </div>
   </div>
   <div class="header-right">
+    <!-- Info icon -->
+    <button class="hbtn" title="About responses" onclick="toggleInfo(event)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="8" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="12" y1="11" x2="12" y2="17" stroke-linecap="round"/>
+      </svg>
+    </button>
     <!-- User icon (hidden for now)
     <button class="hbtn" title="Account" onclick="void(0)">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -489,7 +536,6 @@ body {
       <div class="topics">
         <button class="topic-btn" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">Wedding photography</button>
         <button class="topic-btn" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">Video / Vlog</button>
-        <button class="topic-btn" onclick="sendMessage('Compact travel zoom lens for mirrorless')">Travel zoom</button>
         <button class="topic-btn" onclick="sendMessage('Sigma macro lens for product photography')">Macro lens</button>
         <button class="topic-btn" onclick="sendMessage('Show me authorised Sigma dealers near me')">Find a dealer</button>
         <button class="topic-btn" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">Loyalty program</button>
@@ -525,6 +571,37 @@ body {
 </div>
 
 </div><!-- /app -->
+
+<!-- ── INFO POPOVER ───────────────────── -->
+<div id="info-popover" style="
+  display:none;
+  position:fixed;
+  top:58px;
+  right:16px;
+  width:300px;
+  background:var(--bg-white);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:16px 18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+  z-index:999;
+  animation:fade-up .18s ease;
+">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-label)">About Responses</span>
+    <button onclick="toggleInfo()" style="background:none;border:none;cursor:pointer;color:var(--text-sub);font-size:18px;line-height:1;padding:0;margin-left:8px">&#215;</button>
+  </div>
+  <p style="font-family:var(--font-body);font-size:13px;color:var(--text-body);line-height:1.65;margin:0">
+    Responses are auto-generated by <strong style="color:var(--text-hero)">SigmaAI</strong> and may vary between users. The assistant interprets each query independently — phrasing, context, and session history all influence the answer, so two people asking the same question may receive different responses. Always verify pricing and availability with an authorised Sigma dealer before purchase.
+  </p>
+  <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+    <p style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-label);margin-bottom:6px">Need Further Assistance?</p>
+    <p style="font-family:var(--font-body);font-size:13px;color:var(--text-body);line-height:1.6;margin:0">
+      Contact <strong style="color:var(--text-hero)">Shetala Agencies</strong> for personalised support:<br>
+      <a href="tel:+917305043994" style="color:var(--black);font-weight:600;text-decoration:none;letter-spacing:.02em">+91 73050 43994</a>
+    </p>
+  </div>
+</div>
 
 <!-- ── LEAD CAPTURE MODAL ─────────────── -->
 <div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
@@ -697,7 +774,13 @@ function addBotMsgSimple(text){
   row.innerHTML=`${avBot()}
   <div class="msg-body">
     <div class="bubble bot"><p>${esc(text)}</p></div>
-    <div class="msg-time">${nowTime()} · Sigma Assistant</div>
+    <div class="msg-time">
+      ${nowTime()} · Sigma Assistant
+      <span class="msg-info-btn" onclick="toggleInfo(event)" title="About this response">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="11" x2="12" y2="17" stroke-linecap="round"/></svg>
+        <span>Click here to know more about this response</span>
+      </span>
+    </div>
   </div>`;
   inner.appendChild(row); scrollBottom();
 }
@@ -725,7 +808,13 @@ function addBotMsg(data){
   row.innerHTML=`${avBot()}
   <div class="msg-body">
     ${html}
-    <div class="msg-time">${nowTime()} · Sigma Assistant</div>
+    <div class="msg-time">
+      ${nowTime()} · Sigma Assistant
+      <span class="msg-info-btn" onclick="toggleInfo(event)" title="About this response">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="11" x2="12" y2="17" stroke-linecap="round"/></svg>
+        <span>Need more help ? Chat with our support team.</span>
+      </span>
+    </div>
   </div>`;
   inner.appendChild(row); scrollBottom();
 }
@@ -861,13 +950,83 @@ function toggleAcc(id,hdr){
 }
 
 function fmtText(t){
-  let s=esc(t);
-  s=s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  s=s.replace(/\*(.*?)\*/g,'<em>$1</em>');
-  s=s.replace(/`(.*?)`/g,`<code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>`);
-  const paras=s.split('\n\n').filter(p=>p.trim());
-  if(!paras.length)return'<p>Here are the results.</p>';
-  return paras.map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  if(!t) return '<p>Here are the results.</p>';
+
+  // 1. Escape HTML first
+  let s = esc(t);
+
+  // 2. Inline markdown: bold, italic, inline-code, links
+  s = s.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  s = s.replace(/`(.*?)`/g, '<code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>');
+  // Links: [text](url) — fix escaped quotes from esc()
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--black);text-decoration:underline;text-underline-offset:2px">$1</a>');
+
+  // 3. Split into lines and process block-level elements
+  const lines = s.split('\n');
+  const out   = [];
+  let inList   = false;  // unordered
+  let inOList  = false;  // ordered
+
+  const closeList  = () => { if(inList)  { out.push('</ul>'); inList=false; } };
+  const closeOList = () => { if(inOList) { out.push('</ol>'); inOList=false; } };
+
+  for(let i=0; i<lines.length; i++){
+    const line = lines[i];
+    const raw  = line.trim();
+
+    // Skip empty lines — used as paragraph breaks
+    if(!raw){ closeList(); closeOList(); out.push('<br>'); continue; }
+
+    // Headings: ### ## # (after esc, # is still #)
+    const h3 = raw.match(/^###\s+(.+)/);
+    const h2 = raw.match(/^##\s+(.+)/);
+    const h1 = raw.match(/^#\s+(.+)/);
+    if(h1||h2||h3){
+      closeList(); closeOList();
+      const txt = (h1||h2||h3)[1];
+      const sz  = h1 ? '17px' : h2 ? '15.5px' : '14px';
+      out.push(`<p style="font-size:${sz};font-weight:600;color:var(--text-hero);margin-top:10px;margin-bottom:2px">${txt}</p>`);
+      continue;
+    }
+
+    // Horizontal rule
+    if(/^(-{3,}|\*{3,}|_{3,})$/.test(raw)){
+      closeList(); closeOList();
+      out.push('<hr style="border:none;border-top:1px solid var(--border);margin:8px 0"/>');
+      continue;
+    }
+
+    // Unordered list: - or * or •
+    const ul = raw.match(/^[-*•]\s+(.+)/);
+    if(ul){
+      closeOList();
+      if(!inList){ out.push('<ul style="margin:6px 0 6px 18px;padding:0;list-style:disc">'); inList=true; }
+      out.push(`<li style="margin-bottom:3px;line-height:1.55">${ul[1]}</li>`);
+      continue;
+    }
+
+    // Ordered list: 1. 2. etc
+    const ol = raw.match(/^\d+\.\s+(.+)/);
+    if(ol){
+      closeList();
+      if(!inOList){ out.push('<ol style="margin:6px 0 6px 18px;padding:0">'); inOList=true; }
+      out.push(`<li style="margin-bottom:3px;line-height:1.55">${ol[1]}</li>`);
+      continue;
+    }
+
+    // Normal paragraph line
+    closeList(); closeOList();
+    out.push(`<p style="margin-bottom:5px">${raw}</p>`);
+  }
+
+  closeList();
+  closeOList();
+
+  // Clean up lone <br> at start/end and double <br>
+  let html = out.join('').replace(/(<br>\s*){2,}/g,'<br>').replace(/^<br>/,'').replace(/<br>$/,'');
+  return html || '<p>Here are the results.</p>';
 }
 
 function esc(s){
@@ -890,7 +1049,6 @@ function resetChat(){
         <div class="topics">
           <button class="topic-btn" onclick="sendMessage('Best lens for wedding photography under ₹1 lakh')">Wedding photography</button>
           <button class="topic-btn" onclick="sendMessage('Sigma APS-C lenses for video and vlogging')">Video / Vlog</button>
-          <button class="topic-btn" onclick="sendMessage('Compact travel zoom lens for mirrorless')">Travel zoom</button>
           <button class="topic-btn" onclick="sendMessage('Sigma macro lens for product photography')">Macro lens</button>
           <button class="topic-btn" onclick="sendMessage('Show me authorised Sigma dealers near me')">Find a dealer</button>
           <button class="topic-btn" onclick="window.open('https://sigmaindia.in/loyalty-program/', '_blank')">Loyalty program</button>
@@ -920,6 +1078,18 @@ function resetChat(){
     });
   });
 }
+function toggleInfo(e){
+  const pop = document.getElementById('info-popover');
+  const isOpen = pop.style.display === 'block';
+  pop.style.display = isOpen ? 'none' : 'block';
+  if(e) e.stopPropagation();
+}
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('info-popover');
+  if(pop.style.display === 'block' && !pop.contains(e.target)){
+    pop.style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>

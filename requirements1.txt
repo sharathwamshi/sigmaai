@@ -1,0 +1,17 @@
+# Sigma India Voice Bot — Dependencies
+# pip install -r requirements.txt
+
+# Core
+flask>=3.0.0
+twilio>=9.0.0
+anthropic>=0.30.0
+python-dotenv>=1.0.0
+
+# Free TTS fallback (if not using Twilio Polly <Say>)
+gtts>=2.5.0
+
+# Optional: Google Cloud TTS for highest quality audio
+# google-cloud-texttospeech>=2.16.0
+
+# Optional: Google Cloud STT (60 min/month free)
+# google-cloud-speech>=2.24.0

@@ -995,8 +995,39 @@ def _fallback(query):
     return ("```json_products\n" + json.dumps(prods, indent=2) + "\n```\n\n"
             "Here are Sigma products matching your query. Visit sigmaindia.in for pricing.")
 
+def clean_text_for_chat(text: str) -> str:
+    """
+    Convert Claude's markdown text into clean plain-text paragraphs
+    so the frontend fmtText() renderer handles all formatting.
+    Removes: # headings → plain text, excessive blank lines.
+    Keeps: **bold**, *italic*, `code`, - bullets, numbered lists.
+    The frontend fmtText() will handle those correctly.
+    """
+    import re
+    lines = text.split('\n')
+    cleaned = []
+    for line in lines:
+        # Convert # headings to plain bold text
+        m = re.match(r'^#{1,3}\s+(.+)', line)
+        if m:
+            cleaned.append(f'**{m.group(1)}**')
+            continue
+        # Remove horizontal rules
+        if re.match(r'^[-*_]{3,}$', line.strip()):
+            continue
+        cleaned.append(line)
+ 
+    result = '\n'.join(cleaned)
+    # Collapse 3+ consecutive blank lines into 2
+    result = re.sub(r'\n{3,}', '\n\n', result)
+    return result.strip()
+ 
+ 
+# ── 2. Replace the existing parse_response() with this ──────────
+ 
 def parse_response(raw):
     result = {"text": raw, "products": [], "prices": [], "dealers": []}
+ 
     def ex(tag):
         m = re.search(rf"```{tag}\s*([\s\S]*?)```", raw)
         if m:
@@ -1005,12 +1036,18 @@ def parse_response(raw):
             except:
                 return []
         return []
+ 
     result["products"] = ex("json_products")
     result["prices"]   = ex("json_prices")
     result["dealers"]  = ex("json_dealers")
-    result["text"]     = re.sub(r"```json_\w+\s*[\s\S]*?```", "", raw).strip()
+ 
+    # Strip all JSON blocks from text
+    clean = re.sub(r"```json_\w+\s*[\s\S]*?```", "", raw).strip()
+ 
+    # Clean markdown headings → plain text so frontend renders correctly
+    result["text"] = clean_text_for_chat(clean)
+ 
     return result
-
 
 def load_service_centers() -> list:
     if os.path.exists(SERVICE_CENTER_PATH):
