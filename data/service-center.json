@@ -45,7 +45,7 @@
     "type": "Authorised Service Centre"
   },
   {
-    "name": "Camera Service Centre",
+    "name": "CAMERA SERVICE CENTER",
     "address": "No.5, Vijaya Shanthi Complex Basement, No.3, Blackers Road, Next to Casino Theatre, Mount Road, Anna Salai, Chennai, Tamil Nadu 600002",
     "city": "Chennai",
     "state": "Tamil Nadu",
@@ -88,6 +88,59 @@
     "phone": "04812568876",
     "email": "camerascansigma@gmail.com",
     "type": "Authorised Service Centre"
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "#FF4,1St Floor,White House,\nNo 23-29 St Marks Road\nBangalore-560001",
+    "city": "Bangalore",
+    "state": "karnataka",
+    "phone": "9900015547",
+    "email": "satish@shetalacamera.com"
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "Shetala Agencies Pvt Ltd\t\t\t\nFlat No G-2, Ground Floor\t\t\t\nPragati Tower, Rajendra Place\t\t\t\nNew Delhi-110008",
+    "city": "New Delhi",
+    "state": "New Delhi",
+    "phone": "8105409366",
+    "email": "sureshtamil2012@gmail.com"
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "THE SESHAN SQUARE\t\t\t\t\t\t\nShetala Agencies Pvt Ltd,\t\t\t\t\t\t\nNO:36,/27, 5th Cross Street,\t\t\t\t\t\t\nBharathi Avenue,Kaveri Nagar\t\t\t\t\t\t\nKottivakam, Chennai-600041",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "phone": "9789814385",
+    "email": "servies@shetalacameras.com"
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "Mr.Sathish kumar\t\t\t\t\t\t\t\nShetala Cameras,\t\t\t\t\t\t\t\n1st Floor,Plot-5,Sonawala Cottage,\t\t\t\t\t\t\t\nGola lane,Fort,\t\t\t\t\t\t\t\nMumbai-400001",
+    "city": "Mumbai",
+    "state": "Mumbai",
+    "phone": "9619825776",
+    "email": "satish@shetalacamera.com"
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "Shetala Agencies Pvt Ltd,\t\t\t\t\t\t\nG-35,44/488B-12,Penta Tower,\t\t\t\t\t\t\nKALOOR,ERNAKULAM,\t\t\t\t\t\t\nKERALA-682017",
+    "city": "ERNAKULAM",
+    "state": "KERALA",
+    "phone": "9176669842",
+    "email": ""
+  },
+  {
+    "name": "SHETALA CAMERAS",
+    "type": "Authorised Service Centre",
+    "address": "I Deals\t\t\t\t\t\t\nShop No:17,1St Floor,\t\t\t\t\t\t\nHardy Complex, M.G Road,\t\t\t\t\t\t\nSecundrabad-500 003\t\t\t\t\t\t\nTelangana State.",
+    "city": "Secundrabad",
+    "state": "Telangana",
+    "phone": "9700885776",
+    "email": ""
   }
 ]
-

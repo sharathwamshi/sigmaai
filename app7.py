@@ -16,15 +16,6 @@ from flask import (Flask, render_template, request, jsonify,
 import openpyxl
 from werkzeug.utils import secure_filename
 
-# Load .env file (same file sigma_whatsapp_bot.py reads) BEFORE any
-# os.environ.get() calls below, or those calls will always see defaults.
-try:
-    from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
-except ImportError:
-    print("[WARN] python-dotenv not installed — .env file will not be loaded. "
-          "Run: pip install python-dotenv")
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "sigma-assistant-2025-secret")
 
@@ -46,24 +37,6 @@ for d in [os.path.join(BASE_DIR, "data"), IMAGES_DIR]:
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "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")
 CLAUDE_MODEL      = "claude-sonnet-4-20250514"
 ALLOWED_EXT       = {"png", "jpg", "jpeg", "webp", "gif"}
-
-# ── TWILIO (for live WhatsApp chat history) ───────────────
-# Same env vars used by sigma_whatsapp_bot.py — set once, shared by both.
-TWILIO_ACCOUNT_SID   = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "")
-TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
-
-def get_twilio_client():
-    """Return a Twilio REST client, or None if credentials aren't configured."""
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return None
-    try:
-        from twilio.rest import Client as TwilioRestClient
-        return TwilioRestClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    except Exception as e:
-        print(f"[TWILIO CLIENT ERROR] {e}")
-        return None
-
 
 # ── DEALER SHEET MAPPING ─────────────────────────────────
 DEALER_SHEET_MAP = {
@@ -158,12 +131,7 @@ def save_whatsapp_config(cfg):
         json.dump(cfg, f, indent=2)
 
 def load_whatsapp_sessions() -> list:
-    """
-    Optional local log (written by sigma_whatsapp_bot.py), used ONLY as a
-    fallback source for the customer's display name — Twilio's Message
-    resource doesn't carry WhatsApp profile names. Chat history itself is
-    always pulled live from Twilio, never from this file.
-    """
+    """Load the WhatsApp bot's session log (written by sigma_whatsapp_bot.py)."""
     if os.path.exists(WHATSAPP_SESSIONS_PATH):
         try:
             with open(WHATSAPP_SESSIONS_PATH) as f:
@@ -173,85 +141,10 @@ def load_whatsapp_sessions() -> list:
             print(f"[WHATSAPP SESSIONS ERROR] {e}")
     return []
 
-def _whatsapp_name_lookup() -> dict:
-    """phone -> name map, best-effort, from the local log if present."""
-    names = {}
-    for s in load_whatsapp_sessions():
-        phone = s.get("phone", "")
-        name  = s.get("name", "")
-        if phone and name:
-            names[phone] = name
-    return names
-
-def _twilio_msg_to_dict(m, bot_number: str) -> dict:
-    """Normalize a Twilio Message resource into our chat-message format."""
-    to_num   = m.to or ""
-    from_num = m.from_ or ""
-    is_to_bot = to_num == bot_number
-    counterpart = from_num if is_to_bot else to_num
-    date = m.date_created
-    return {
-        "sid":         m.sid,
-        "counterpart": counterpart,
-        "direction":   "user" if is_to_bot else "bot",
-        "body":        m.body or "",
-        "status":      m.status or "",
-        "date":        date.isoformat() if date else "",
-    }
-
-def fetch_whatsapp_conversations(limit_per_side: int = 500):
-    """
-    Pull ALL WhatsApp messages sent to/from our Twilio number and group
-    them by the customer's phone number. Returns None if Twilio isn't
-    configured (missing credentials) or the API call fails.
-    """
-    client = get_twilio_client()
-    if not client:
-        return None
-    try:
-        inbound  = client.messages.list(to=TWILIO_WHATSAPP_FROM, limit=limit_per_side)
-        outbound = client.messages.list(from_=TWILIO_WHATSAPP_FROM, limit=limit_per_side)
-    except Exception as e:
-        print(f"[TWILIO FETCH ERROR] {e}")
-        return None
-
-    grouped = {}
-    for m in list(inbound) + list(outbound):
-        d = _twilio_msg_to_dict(m, TWILIO_WHATSAPP_FROM)
-        phone = d["counterpart"]
-        if not phone:
-            continue
-        grouped.setdefault(phone, []).append(d)
-
-    names = _whatsapp_name_lookup()
-    sessions = []
-    for phone, msgs in grouped.items():
-        msgs.sort(key=lambda x: x["date"])
-        sessions.append({
-            "phone":         phone,
-            "name":          names.get(phone, ""),
-            "message_count": len(msgs),
-            "started_at":    msgs[0]["date"] if msgs else "",
-            "updated_at":    msgs[-1]["date"] if msgs else "",
-            "last_message":  msgs[-1]["body"] if msgs else "",
-        })
-    sessions.sort(key=lambda x: x["updated_at"], reverse=True)
-    return sessions
-
-def fetch_whatsapp_conversation_detail(phone: str, limit: int = 300):
-    """Full two-way message history between our number and one customer."""
-    client = get_twilio_client()
-    if not client:
-        return None
-    try:
-        inbound  = client.messages.list(from_=phone, to=TWILIO_WHATSAPP_FROM, limit=limit)
-        outbound = client.messages.list(from_=TWILIO_WHATSAPP_FROM, to=phone, limit=limit)
-    except Exception as e:
-        print(f"[TWILIO DETAIL FETCH ERROR] {e}")
-        return None
-    msgs = [_twilio_msg_to_dict(m, TWILIO_WHATSAPP_FROM) for m in list(inbound) + list(outbound)]
-    msgs.sort(key=lambda x: x["date"])
-    return msgs
+def save_whatsapp_sessions(data: list):
+    os.makedirs(os.path.dirname(WHATSAPP_SESSIONS_PATH), exist_ok=True)
+    with open(WHATSAPP_SESSIONS_PATH, "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 # ══════════════════════════════════════════════════════════
 # CONVERSATIONS
@@ -1517,7 +1410,7 @@ def api_save_config():
     save_config(cfg)
     return jsonify({"ok": True, "message": "Configuration saved successfully"})
 
-# ── WhatsApp Config + Live Chat History (via Twilio) ──────
+# ── WhatsApp Config + Sessions ────────────────────────────
 @app.route("/admin/api/whatsapp/config", methods=["GET"])
 def api_get_whatsapp_config():
     return jsonify(load_whatsapp_config())
@@ -1534,57 +1427,44 @@ def api_save_whatsapp_config():
 
 @app.route("/admin/api/whatsapp/sessions")
 def api_whatsapp_sessions():
-    """
-    Live summary list for the table — phone, name (best-effort), counts,
-    timestamps — sourced directly from Twilio's Message log, not any
-    local file.
-    """
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({
-            "error": "twilio_not_configured",
-            "message": "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and "
-                       "TWILIO_WHATSAPP_FROM as environment variables to "
-                       "view live WhatsApp chat history."
-        }), 400
-
-    sessions = fetch_whatsapp_conversations()
-    if sessions is None:
-        return jsonify({
-            "error": "twilio_fetch_failed",
-            "message": "Could not reach Twilio. Check your credentials and network connection."
-        }), 502
-    return jsonify(sessions)
+    """Summary list for the table — phone, name, counts, timestamps."""
+    sessions = load_whatsapp_sessions()
+    summaries = []
+    for s in sessions:
+        hist = s.get("history", [])
+        last_text = hist[-1].get("text", "") if hist else ""
+        summaries.append({
+            "phone":         s.get("phone", ""),
+            "name":          s.get("name", ""),
+            "started_at":    s.get("started_at", ""),
+            "updated_at":    s.get("updated_at", ""),
+            "message_count": len(hist),
+            "last_message":  last_text,
+        })
+    summaries.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return jsonify(summaries)
 
 @app.route("/admin/api/whatsapp/sessions/detail")
 def api_whatsapp_session_detail():
     phone = request.args.get("phone", "")
-    if not phone:
-        return jsonify({"error": "phone is required"}), 400
+    for s in load_whatsapp_sessions():
+        if s.get("phone") == phone:
+            return jsonify(s)
+    return jsonify({"error": "Not found"}), 404
 
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({
-            "error": "twilio_not_configured",
-            "message": "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and "
-                       "TWILIO_WHATSAPP_FROM as environment variables to "
-                       "view live WhatsApp chat history."
-        }), 400
+@app.route("/admin/api/whatsapp/sessions/delete", methods=["POST"])
+def api_whatsapp_session_delete():
+    phone    = (request.get_json() or {}).get("phone", "")
+    sessions = [s for s in load_whatsapp_sessions() if s.get("phone") != phone]
+    save_whatsapp_sessions(sessions)
+    return jsonify({"ok": True})
 
-    messages = fetch_whatsapp_conversation_detail(phone)
-    if messages is None:
-        return jsonify({
-            "error": "twilio_fetch_failed",
-            "message": "Could not reach Twilio. Check your credentials and network connection."
-        }), 502
-
-    names = _whatsapp_name_lookup()
-    return jsonify({
-        "phone":    phone,
-        "name":     names.get(phone, ""),
-        "messages": messages,
-    })
+@app.route("/admin/api/whatsapp/sessions/clear", methods=["POST"])
+def api_whatsapp_sessions_clear():
+    save_whatsapp_sessions([])
+    return jsonify({"ok": True})
 
 # ── Conversations ────────────────────────────────────────
-
 @app.route("/admin/api/conversations")
 def api_conversations():
     convs      = load_conversations()

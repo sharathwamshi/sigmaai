@@ -1030,10 +1030,10 @@ def main():
     print("=" * 56)
     print("  Webhook URL: POST /whatsapp")
     print("  Health:      GET  /health")
-    print("  Running on   http://0.0.0.0:5050")
+    print("  Running on   http://0.0.0.0:5000")
     print("=" * 56)
 
-    app_flask.run(host="0.0.0.0", port=5050, debug=False)
+    app_flask.run(host="0.0.0.0", port=5000, debug=False)
 
 
 if __name__ == "__main__":

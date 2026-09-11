@@ -9,21 +9,29 @@ FIXES in this version:
 3. Language: default English; if user explicitly asks in another language → reply in that
 """
 
-import os, json, re, uuid, shutil
-from datetime import datetime
+import os, sys, json, re, uuid, shutil, logging
+from datetime import datetime, timezone
+from pathlib import Path
 from flask import (Flask, render_template, request, jsonify,
                    session, send_from_directory)
 import openpyxl
 from werkzeug.utils import secure_filename
 
-# Load .env file (same file sigma_whatsapp_bot.py reads) BEFORE any
-# os.environ.get() calls below, or those calls will always see defaults.
+# Load .env file if present (used for TWILIO_* / ANTHROPIC_API_KEY overrides)
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+    load_dotenv()
 except ImportError:
-    print("[WARN] python-dotenv not installed — .env file will not be loaded. "
-          "Run: pip install python-dotenv")
+    pass
+
+from twilio.rest import Client as TwilioClient
+from twilio.twiml.messaging_response import MessagingResponse
+
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    level=logging.INFO,
+)
+wa_log = logging.getLogger("whatsapp_bot")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "sigma-assistant-2025-secret")
@@ -37,8 +45,6 @@ CONV_PATH     = os.path.join(BASE_DIR, "data", "conversations.json")
 IMAGES_DIR    = os.path.join(BASE_DIR, "static", "images")
 PRICES_PATH   = os.path.join(BASE_DIR, "data", "prices.json")
 SERVICE_CENTER_PATH = os.path.join(BASE_DIR, "data", "service-center.json")
-WHATSAPP_CONFIG_PATH   = os.path.join(BASE_DIR, "data", "whatsapp_config.json")
-WHATSAPP_SESSIONS_PATH = os.path.join(BASE_DIR, "data", "whatsapp_sessions.json")
 
 for d in [os.path.join(BASE_DIR, "data"), IMAGES_DIR]:
     os.makedirs(d, exist_ok=True)
@@ -47,23 +53,20 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "sk-ant-api03-SCHFFbwqTY
 CLAUDE_MODEL      = "claude-sonnet-4-20250514"
 ALLOWED_EXT       = {"png", "jpg", "jpeg", "webp", "gif"}
 
-# ── TWILIO (for live WhatsApp chat history) ───────────────
-# Same env vars used by sigma_whatsapp_bot.py — set once, shared by both.
-TWILIO_ACCOUNT_SID   = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "")
+# ── WHATSAPP / TWILIO ────────────────────────────────────
+# Credentials stay in environment variables / .env (never exposed in the
+# admin settings tab) — same TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN /
+# TWILIO_WHATSAPP_FROM used everywhere below.
+TWILIO_ACCOUNT_SID   = os.environ.get("TWILIO_ACCOUNT_SID", "YOUR_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "YOUR_AUTH_TOKEN")
 TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
+WA_CONFIG_PATH       = os.path.join(BASE_DIR, "data", "whatsapp_config.json")
+WA_SESSIONS_PATH     = os.path.join(BASE_DIR, "data", "whatsapp_sessions.json")
 
-def get_twilio_client():
-    """Return a Twilio REST client, or None if credentials aren't configured."""
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return None
-    try:
-        from twilio.rest import Client as TwilioRestClient
-        return TwilioRestClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    except Exception as e:
-        print(f"[TWILIO CLIENT ERROR] {e}")
-        return None
-
+# Client construction never fails even with placeholder creds — failures
+# only surface when an actual API call is made, and every call site below
+# already wraps that in try/except with a graceful fallback.
+twilio_client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # ── DEALER SHEET MAPPING ─────────────────────────────────
 DEALER_SHEET_MAP = {
@@ -127,131 +130,142 @@ def save_config(cfg):
         json.dump(cfg, f, indent=2)
 
 # ══════════════════════════════════════════════════════════
-# WHATSAPP CONFIG + SESSIONS
+# WHATSAPP BOT CONFIG (drives the Settings tab in /admin)
 # ══════════════════════════════════════════════════════════
+# Default flow content — mirrors the reference whatsapp_bot.py exactly
+# (same 5 categories / 6 states / same screens, in the same order).
+# The Settings tab in /admin edits these; the keys (lenses, tn, etc.) are
+# the fixed menu structure and are never renamed, only their text/links are.
+DEFAULT_WA_CATEGORIES = {
+    "lenses": {
+        "label": "Lenses", "button": "View Lenses",
+        "desc":  "Explore our complete range of SIGMA lenses.",
+        "url":   "https://sigmaindia.in/lenses",              # REPLACE ME
+    },
+    "cine": {
+        "label": "Cine Lenses", "button": "View Cine Lenses",
+        "desc":  "Discover our professional cine lenses.",
+        "url":   "https://sigmaindia.in/cine-lenses",          # REPLACE ME
+    },
+    "cameras": {
+        "label": "Cameras", "button": "View Cameras",
+        "desc":  "Explore our latest camera lineup.",
+        "url":   "https://sigmaindia.in/cameras",              # REPLACE ME
+    },
+    "accessories": {
+        "label": "Accessories", "button": "View Accessories",
+        "desc":  "Browse accessories compatible with your SIGMA equipment.",
+        "url":   "https://sigmaindia.in/accessories",          # REPLACE ME
+    },
+    "discontinued": {
+        "label": "Discontinued Models", "button": "View Models",
+        "desc":  "Looking for older products? Browse discontinued models.",
+        "url":   "https://sigmaindia.in/discontinued-models",  # REPLACE ME
+    },
+}
+
+DEFAULT_WA_STATES = {
+    "tn": {
+        "label": "Tamil Nadu", "team": "SIGMA Chennai Sales Team",
+        "phone": "+91 90809 52751", "email": "chennai@sigmaindia.in",     # REPLACE ME
+    },
+    "ka": {
+        "label": "Karnataka", "team": "SIGMA Bangalore Sales Team",
+        "phone": "+91 00000 00000", "email": "bangalore@sigmaindia.in",   # REPLACE ME
+    },
+    "kl": {
+        "label": "Kerala", "team": "SIGMA Kerala Sales Team",
+        "phone": "+91 00000 00000", "email": "kerala@sigmaindia.in",      # REPLACE ME
+    },
+    "mh": {
+        "label": "Maharashtra", "team": "SIGMA Mumbai Sales Team",
+        "phone": "+91 00000 00000", "email": "mumbai@sigmaindia.in",      # REPLACE ME
+    },
+    "dl": {
+        "label": "Delhi", "team": "SIGMA Delhi Sales Team",
+        "phone": "+91 00000 00000", "email": "delhi@sigmaindia.in",       # REPLACE ME
+    },
+    "other": {
+        "label": "Other", "team": "SIGMA National Sales Team",
+        "phone": "+91 00000 00000", "email": "info@sigmaindia.in",        # REPLACE ME
+    },
+}
+
+DEFAULT_WA_SUPPORT = {
+    "body": ("Need assistance with your SIGMA product?\n\n"
+             "Find your nearest authorized service centre."),
+    "url":  "https://sigmaindia.in/service-centre-locator",   # REPLACE ME
+}
+
+DEFAULT_WA_WARRANTY = {
+    "body": ("Register your SIGMA product in 3 simple steps.\n\n"
+             "1. Visit the link\n"
+             "2. Create account / login\n"
+             "3. Register your product"),
+    "url":  "https://sigmaindia.in/warranty-registration",    # REPLACE ME
+}
+
+DEFAULT_WA_LOYALTY = {
+    "body": ("Join the Sigma Loyalty Program (SIGMA Focal Circle) in 3 simple steps.\n\n"
+             "1. Visit the link\n"
+             "2. Create account / login\n"
+             "3. Join the loyalty program\n\n"
+             "Earn rewards on eligible purchases."),
+    "url":  "https://sigmaindia.in/loyalty",                  # REPLACE ME
+}
+
 DEFAULT_WHATSAPP_CONFIG = {
-    "enabled": True,
-    "brand_name": "Sigma AI Assistant",
-    "welcome_message": "Welcome, {name}. I am the Sigma AI Assistant, your guide for everything related to Sigma in India.",
-    "footer_text": "sigmaindia.in",
-    "business_hours": "Monday to Saturday, 9 AM to 6 PM IST",
-    "support_email": "info@sigmaindia.in",
-    "updated_at": "",
+    "enabled":         True,
+    "brand_name":      "Sigma AI Assistant",
+    "footer_text":     "sigmaindia.in",
+    "welcome_message": "Welcome to SIGMA India!\n\nPlease choose an option from the menu below.",
+    "business_hours":  "",
+    "support_email":   "",
+    "categories":      DEFAULT_WA_CATEGORIES,
+    "states":          DEFAULT_WA_STATES,
+    "support":         DEFAULT_WA_SUPPORT,
+    "warranty":        DEFAULT_WA_WARRANTY,
+    "loyalty":         DEFAULT_WA_LOYALTY,
+    "updated_at":      "",
 }
 
 def load_whatsapp_config():
-    if os.path.exists(WHATSAPP_CONFIG_PATH):
+    cfg = dict(DEFAULT_WHATSAPP_CONFIG)
+    if os.path.exists(WA_CONFIG_PATH):
         try:
-            with open(WHATSAPP_CONFIG_PATH) as f:
-                cfg = json.load(f)
+            with open(WA_CONFIG_PATH) as f:
+                saved = json.load(f)
             for k, v in DEFAULT_WHATSAPP_CONFIG.items():
-                cfg.setdefault(k, v)
-            return cfg
-        except:
+                if k not in saved:
+                    continue
+                if isinstance(v, dict) and isinstance(saved.get(k), dict):
+                    # Nested dicts (categories/states/support/warranty/loyalty):
+                    # merge per sub-key so an older/partial saved file still
+                    # has every field the flow needs, defaulting the rest.
+                    merged = {}
+                    for sub_k, sub_v in v.items():
+                        saved_sub = saved[k].get(sub_k)
+                        if isinstance(sub_v, dict) and isinstance(saved_sub, dict):
+                            merged_sub = dict(sub_v)
+                            merged_sub.update(saved_sub)
+                            merged[sub_k] = merged_sub
+                        else:
+                            merged[sub_k] = saved_sub if saved_sub is not None else sub_v
+                    # Keep any extra sub-keys the saved file might have.
+                    for sub_k, sub_v in saved[k].items():
+                        merged.setdefault(sub_k, sub_v)
+                    cfg[k] = merged
+                else:
+                    cfg[k] = saved[k]
+        except Exception:
             pass
-    return dict(DEFAULT_WHATSAPP_CONFIG)
+    return cfg
 
 def save_whatsapp_config(cfg):
     cfg["updated_at"] = datetime.now().isoformat()
-    os.makedirs(os.path.dirname(WHATSAPP_CONFIG_PATH), exist_ok=True)
-    with open(WHATSAPP_CONFIG_PATH, "w") as f:
+    os.makedirs(os.path.dirname(WA_CONFIG_PATH), exist_ok=True)
+    with open(WA_CONFIG_PATH, "w") as f:
         json.dump(cfg, f, indent=2)
-
-def load_whatsapp_sessions() -> list:
-    """
-    Optional local log (written by sigma_whatsapp_bot.py), used ONLY as a
-    fallback source for the customer's display name — Twilio's Message
-    resource doesn't carry WhatsApp profile names. Chat history itself is
-    always pulled live from Twilio, never from this file.
-    """
-    if os.path.exists(WHATSAPP_SESSIONS_PATH):
-        try:
-            with open(WHATSAPP_SESSIONS_PATH) as f:
-                data = json.load(f)
-            return data if isinstance(data, list) else []
-        except Exception as e:
-            print(f"[WHATSAPP SESSIONS ERROR] {e}")
-    return []
-
-def _whatsapp_name_lookup() -> dict:
-    """phone -> name map, best-effort, from the local log if present."""
-    names = {}
-    for s in load_whatsapp_sessions():
-        phone = s.get("phone", "")
-        name  = s.get("name", "")
-        if phone and name:
-            names[phone] = name
-    return names
-
-def _twilio_msg_to_dict(m, bot_number: str) -> dict:
-    """Normalize a Twilio Message resource into our chat-message format."""
-    to_num   = m.to or ""
-    from_num = m.from_ or ""
-    is_to_bot = to_num == bot_number
-    counterpart = from_num if is_to_bot else to_num
-    date = m.date_created
-    return {
-        "sid":         m.sid,
-        "counterpart": counterpart,
-        "direction":   "user" if is_to_bot else "bot",
-        "body":        m.body or "",
-        "status":      m.status or "",
-        "date":        date.isoformat() if date else "",
-    }
-
-def fetch_whatsapp_conversations(limit_per_side: int = 500):
-    """
-    Pull ALL WhatsApp messages sent to/from our Twilio number and group
-    them by the customer's phone number. Returns None if Twilio isn't
-    configured (missing credentials) or the API call fails.
-    """
-    client = get_twilio_client()
-    if not client:
-        return None
-    try:
-        inbound  = client.messages.list(to=TWILIO_WHATSAPP_FROM, limit=limit_per_side)
-        outbound = client.messages.list(from_=TWILIO_WHATSAPP_FROM, limit=limit_per_side)
-    except Exception as e:
-        print(f"[TWILIO FETCH ERROR] {e}")
-        return None
-
-    grouped = {}
-    for m in list(inbound) + list(outbound):
-        d = _twilio_msg_to_dict(m, TWILIO_WHATSAPP_FROM)
-        phone = d["counterpart"]
-        if not phone:
-            continue
-        grouped.setdefault(phone, []).append(d)
-
-    names = _whatsapp_name_lookup()
-    sessions = []
-    for phone, msgs in grouped.items():
-        msgs.sort(key=lambda x: x["date"])
-        sessions.append({
-            "phone":         phone,
-            "name":          names.get(phone, ""),
-            "message_count": len(msgs),
-            "started_at":    msgs[0]["date"] if msgs else "",
-            "updated_at":    msgs[-1]["date"] if msgs else "",
-            "last_message":  msgs[-1]["body"] if msgs else "",
-        })
-    sessions.sort(key=lambda x: x["updated_at"], reverse=True)
-    return sessions
-
-def fetch_whatsapp_conversation_detail(phone: str, limit: int = 300):
-    """Full two-way message history between our number and one customer."""
-    client = get_twilio_client()
-    if not client:
-        return None
-    try:
-        inbound  = client.messages.list(from_=phone, to=TWILIO_WHATSAPP_FROM, limit=limit)
-        outbound = client.messages.list(from_=TWILIO_WHATSAPP_FROM, to=phone, limit=limit)
-    except Exception as e:
-        print(f"[TWILIO DETAIL FETCH ERROR] {e}")
-        return None
-    msgs = [_twilio_msg_to_dict(m, TWILIO_WHATSAPP_FROM) for m in list(inbound) + list(outbound)]
-    msgs.sort(key=lambda x: x["date"])
-    return msgs
 
 # ══════════════════════════════════════════════════════════
 # CONVERSATIONS
@@ -1151,39 +1165,8 @@ def _fallback(query):
     return ("```json_products\n" + json.dumps(prods, indent=2) + "\n```\n\n"
             "Here are Sigma products matching your query. Visit sigmaindia.in for pricing.")
 
-def clean_text_for_chat(text: str) -> str:
-    """
-    Convert Claude's markdown text into clean plain-text paragraphs
-    so the frontend fmtText() renderer handles all formatting.
-    Removes: # headings → plain text, excessive blank lines.
-    Keeps: **bold**, *italic*, `code`, - bullets, numbered lists.
-    The frontend fmtText() will handle those correctly.
-    """
-    import re
-    lines = text.split('\n')
-    cleaned = []
-    for line in lines:
-        # Convert # headings to plain bold text
-        m = re.match(r'^#{1,3}\s+(.+)', line)
-        if m:
-            cleaned.append(f'**{m.group(1)}**')
-            continue
-        # Remove horizontal rules
-        if re.match(r'^[-*_]{3,}$', line.strip()):
-            continue
-        cleaned.append(line)
- 
-    result = '\n'.join(cleaned)
-    # Collapse 3+ consecutive blank lines into 2
-    result = re.sub(r'\n{3,}', '\n\n', result)
-    return result.strip()
- 
- 
-# ── 2. Replace the existing parse_response() with this ──────────
- 
 def parse_response(raw):
     result = {"text": raw, "products": [], "prices": [], "dealers": []}
- 
     def ex(tag):
         m = re.search(rf"```{tag}\s*([\s\S]*?)```", raw)
         if m:
@@ -1192,18 +1175,12 @@ def parse_response(raw):
             except:
                 return []
         return []
- 
     result["products"] = ex("json_products")
     result["prices"]   = ex("json_prices")
     result["dealers"]  = ex("json_dealers")
- 
-    # Strip all JSON blocks from text
-    clean = re.sub(r"```json_\w+\s*[\s\S]*?```", "", raw).strip()
- 
-    # Clean markdown headings → plain text so frontend renders correctly
-    result["text"] = clean_text_for_chat(clean)
- 
+    result["text"]     = re.sub(r"```json_\w+\s*[\s\S]*?```", "", raw).strip()
     return result
+
 
 def load_service_centers() -> list:
     if os.path.exists(SERVICE_CENTER_PATH):
@@ -1237,6 +1214,510 @@ def search_service_centers(query: str) -> list:
         return all_sc
     return [sc for _, sc in scored]
  
+
+# ══════════════════════════════════════════════════════════
+# WHATSAPP BOT (Twilio) — merged from whatsapp_bot.py so it runs
+# under this SAME Flask app / SAME host:port as the website & admin
+# panel. The menu flow below is unchanged from the approved version:
+#   Browse Products | Purchase | Technical Support |
+#   Warranty Registration | Sigma Loyalty Program
+# Every menu is a single WhatsApp interactive list message, with a
+# quick-reply / plain-text fallback if the Content API call fails.
+# Text shown to users (brand name, welcome message, footer, business
+# hours, support email, on/off switch) is pulled live from
+# data/whatsapp_config.json — i.e. the WhatsApp Settings tab.
+# ══════════════════════════════════════════════════════════
+
+FOOTER            = "\n\nsigmaindia.in"   # fallback only; get_footer() below is what's actually used
+LIST_PAGE_SIZE    = 10
+SIGMA_WEBSITE_URL = "https://sigmaindia.in"
+
+# ── SESSION STORAGE (in-memory + disk mirror for the admin panel) ──
+WA_SESSIONS: dict = {}
+
+
+def get_wa_session(phone: str) -> dict:
+    if phone not in WA_SESSIONS:
+        WA_SESSIONS[phone] = {"menu": "main", "history": [], "context": {}}
+    return WA_SESSIONS[phone]
+
+
+def save_wa_session_disk(phone: str, name: str):
+    sess     = WA_SESSIONS.get(phone, {})
+    sessions = _load_wa_sessions_disk()
+    now      = datetime.now(timezone.utc).isoformat()
+    for s in sessions:
+        if s.get("phone") == phone:
+            s["history"]    = sess.get("history", [])[-50:]
+            s["updated_at"] = now
+            s["name"]       = name
+            _write_wa_sessions_disk(sessions)
+            return
+    sessions.append({
+        "phone": phone, "name": name,
+        "started_at": now, "updated_at": now,
+        "history": sess.get("history", []),
+    })
+    _write_wa_sessions_disk(sessions)
+
+
+def _load_wa_sessions_disk() -> list:
+    if os.path.exists(WA_SESSIONS_PATH):
+        try:
+            with open(WA_SESSIONS_PATH) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+
+def _write_wa_sessions_disk(data: list):
+    os.makedirs(os.path.dirname(WA_SESSIONS_PATH), exist_ok=True)
+    with open(WA_SESSIONS_PATH, "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+# ── SETTINGS-TAB-DRIVEN TEXT HELPERS ────────────────────────
+def get_footer() -> str:
+    cfg = load_whatsapp_config()
+    return f"\n\n{cfg.get('footer_text') or 'sigmaindia.in'}"
+
+
+# ── TWILIO CONTENT API SENDERS ───────────────────────────────
+def send_interactive_list(to: str, header: str, body: str,
+                           options: list, button_label: str = "Choose an option"):
+    """
+    Send a WhatsApp interactive list message (tap-to-select tiles).
+    ALL options are delivered in ONE message bubble (up to 10 rows) —
+    this is what renders the menu the way the reference screens show
+    it, instead of splitting across several messages.
+    options: list of (label, reply_id) tuples - max 10.
+    Returns the Twilio message SID or None on failure.
+    """
+    import requests
+    from requests.auth import HTTPBasicAuth
+
+    try:
+        items = [
+            {"id": reply_id[:200], "item": label[:24]}
+            for label, reply_id in options[:LIST_PAGE_SIZE]
+        ]
+        content_payload = {
+            "friendly_name": f"sigma_list_{datetime.now().strftime('%H%M%S%f')}",
+            "language": "en",
+            "variables": {},
+            "types": {
+                "twilio/list-picker": {
+                    "body":   body[:1024],
+                    "button": button_label[:20],
+                    "items":  items,
+                }
+            },
+        }
+        resp = requests.post(
+            "https://content.twilio.com/v1/Content",
+            json=content_payload,
+            auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            raise Exception(f"Content API {resp.status_code}: {resp.text}")
+
+        content_sid = resp.json()["sid"]
+        msg = twilio_client.messages.create(content_sid=content_sid, from_=TWILIO_WHATSAPP_FROM, to=to)
+        wa_log.info(f"Interactive list sent: {msg.sid}")
+        return msg.sid
+    except Exception as e:
+        wa_log.warning(f"Interactive list failed ({e}), falling back to quick-reply/text")
+        return None
+
+
+def send_quick_reply(to: str, body: str, options: list):
+    """
+    Send up to 3 WhatsApp quick-reply buttons directly in the chat
+    bubble (no popup). options: list of (label, key) tuples, max 3.
+    Returns the Twilio message SID or None on failure.
+    """
+    import requests
+    from requests.auth import HTTPBasicAuth
+
+    try:
+        actions = [{"id": key[:200], "title": label[:20]} for label, key in options[:3]]
+        content_payload = {
+            "friendly_name": f"sigma_qr_{datetime.now().strftime('%H%M%S%f')}",
+            "language": "en",
+            "variables": {},
+            "types": {
+                "twilio/quick-reply": {
+                    "body": body[:1024],
+                    "actions": actions,
+                }
+            },
+        }
+        resp = requests.post(
+            "https://content.twilio.com/v1/Content",
+            json=content_payload,
+            auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            raise Exception(f"Content API {resp.status_code}: {resp.text}")
+
+        content_sid = resp.json()["sid"]
+        msg = twilio_client.messages.create(content_sid=content_sid, from_=TWILIO_WHATSAPP_FROM, to=to)
+        wa_log.info(f"Quick-reply buttons sent: {msg.sid}")
+        return msg.sid
+    except Exception as e:
+        wa_log.warning(f"Quick-reply buttons failed ({e}), falling back to text")
+        lines = [body, ""]
+        for label, _ in options:
+            lines.append(f"- {label}")
+        lines.append("\nReply with the option name to continue.")
+        lines.append(get_footer())
+        send_text_message(to, "\n".join(lines))
+        return None
+
+
+def send_cta_buttons(to: str, body: str, actions: list):
+    """
+    Send a WhatsApp call-to-action message: body text + up to 2 buttons.
+    actions: list of dicts, each one of:
+      {"type": "URL", "title": "View Lenses", "url": "https://..."}
+      {"type": "PHONE_NUMBER", "title": "Call Us", "phone": "+91..."}
+    Returns the Twilio message SID or None on failure (falls back to plain text).
+    """
+    import requests
+    from requests.auth import HTTPBasicAuth
+
+    try:
+        content_payload = {
+            "friendly_name": f"sigma_cta_{datetime.now().strftime('%H%M%S%f')}",
+            "language": "en",
+            "variables": {},
+            "types": {
+                "twilio/call-to-action": {
+                    "body": body[:1024],
+                    "actions": actions[:2],
+                }
+            },
+        }
+        resp = requests.post(
+            "https://content.twilio.com/v1/Content",
+            json=content_payload,
+            auth=HTTPBasicAuth(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            raise Exception(f"Content API {resp.status_code}: {resp.text}")
+
+        content_sid = resp.json()["sid"]
+        msg = twilio_client.messages.create(content_sid=content_sid, from_=TWILIO_WHATSAPP_FROM, to=to)
+        wa_log.info(f"CTA message sent: {msg.sid}")
+        return msg.sid
+    except Exception as e:
+        wa_log.warning(f"CTA message failed ({e}), falling back to text")
+        lines = [body, ""]
+        for a in actions:
+            if a["type"] == "URL":
+                lines.append(f"{a['title']}: {a['url']}")
+            elif a["type"] == "PHONE_NUMBER":
+                lines.append(f"{a['title']}: {a['phone']}")
+        lines.append(get_footer())
+        send_text_message(to, "\n".join(lines))
+        return None
+
+
+def send_text_message(to: str, body: str):
+    try:
+        msg = twilio_client.messages.create(body=body, from_=TWILIO_WHATSAPP_FROM, to=to)
+        wa_log.info(f"Text message sent: {msg.sid}")
+        return msg.sid
+    except Exception as e:
+        wa_log.error(f"Failed to send text message: {e}")
+        return None
+
+
+def send_back_menu(to: str, extra: list = None):
+    """
+    Sends a small quick-reply button row so the user always has a
+    tappable way back to the menu. This exists because Twilio's
+    twilio/call-to-action message caps out at 2 buttons — screens
+    like the state contact card (Call Us + Email Us) or a category
+    link (View Lenses) already use every slot for the link/action
+    itself, so "Main Menu" can't ride along in that same message.
+    This is sent as a separate, immediate follow-up instead.
+
+    `extra` lets a screen offer one more shortcut ahead of Main Menu,
+    e.g. ("Categories", "products") on a product-category screen —
+    pass None (default) for a bare "Main Menu" button.
+    """
+    options = (extra or []) + [("Main Menu", "main")]
+    send_quick_reply(to, "What would you like to do next?", options)
+
+
+def send_menu(to: str, header: str, body_text: str, options: list,
+              button_label: str = "Choose an option") -> bool:
+    """
+    Sends the full option set as ONE WhatsApp interactive list message
+    (twilio/list-picker) — all rows appear together in a single bubble,
+    matching the approved reference screens exactly. WhatsApp allows up
+    to 10 rows in a list-picker, so every menu in this bot (max 7
+    options) fits in one message; nothing gets split into a second
+    "More options" message anymore.
+
+    Only if the list-picker API call itself fails (network/account
+    issue — see send_interactive_list) does this fall back to the old
+    behaviour of stacking quick-reply buttons in groups of 3.
+    """
+    sid = send_interactive_list(to, header, body_text, options, button_label)
+    if sid:
+        return True
+
+    # Fallback path only: list-picker call failed outright.
+    wa_log.warning("send_menu: list-picker unavailable, using quick-reply fallback")
+    for i in range(0, len(options), 3):
+        chunk = options[i:i + 3]
+        text  = body_text if i == 0 else "More options:"
+        send_quick_reply(to, text, chunk)
+    return True
+
+
+# ── MAIN MENU (matches the approved 5-option flow) ──────────
+MAIN_OPTIONS = [
+    ("Browse Products",       "products"),
+    ("Purchase",              "purchase"),
+    ("Technical Support",     "support"),
+    ("Warranty Registration", "warranty"),
+    ("Sigma Loyalty Program", "loyalty"),   # full name lives in the Loyalty screen body
+                                             # (Settings tab); WhatsApp list rows cap at 24 chars
+]
+
+
+def welcome_msg(user_name: str) -> str:
+    """Brand name / welcome text / business hours come from the WhatsApp
+    Settings tab (data/whatsapp_config.json). Use {name} in the settings
+    tab's Welcome Message to greet the customer by name."""
+    cfg      = load_whatsapp_config()
+    brand    = cfg.get("brand_name") or "SIGMA India"
+    template = cfg.get("welcome_message") or (
+        f"Welcome to {brand}!\n\nPlease choose an option from the menu below."
+    )
+    text = template.replace("{name}", user_name or "there")
+    hours = cfg.get("business_hours")
+    if hours:
+        text += f"\n\nBusiness Hours: {hours}"
+    return text + get_footer()
+
+
+def _send_main_menu(phone: str, sess: dict):
+    sess["options"] = MAIN_OPTIONS
+    send_menu(phone, "Main Menu", "Please choose an option from the menu below.",
+              MAIN_OPTIONS, "Choose an option")
+
+
+# ── BROWSE PRODUCTS / PURCHASE / SUPPORT / WARRANTY / LOYALTY ──
+# The menu structure below (5 categories, 6 states, 3 CTA screens, in this
+# exact order) is the final flow from whatsapp_bot.py and is not editable.
+# Every piece of TEXT inside it — labels, descriptions, button captions,
+# URLs, phone numbers, emails — is now pulled live from the WhatsApp
+# Settings tab (data/whatsapp_config.json), so admins can replace the
+# placeholder "REPLACE ME" values from the admin panel instead of editing
+# code. get_*() below are called fresh on every request so edits saved in
+# the admin panel take effect immediately, without a restart.
+
+def get_category_info() -> dict:
+    return load_whatsapp_config().get("categories") or DEFAULT_WA_CATEGORIES
+
+def get_product_cat_options() -> list:
+    info = get_category_info()
+    return [(v.get("label", k), f"cat:{k}") for k, v in info.items()] + [("Main Menu", "main")]
+
+def get_state_info() -> dict:
+    return load_whatsapp_config().get("states") or DEFAULT_WA_STATES
+
+def get_purchase_state_options() -> list:
+    info = get_state_info()
+    return [(v.get("label", k), f"state:{k}") for k, v in info.items()] + [("Main Menu", "main")]
+
+def get_support_body() -> str:
+    cfg     = load_whatsapp_config()
+    support = cfg.get("support") or DEFAULT_WA_SUPPORT
+    body    = support.get("body") or DEFAULT_WA_SUPPORT["body"]
+    if cfg.get("support_email"):
+        body += f"\n\nOr email us at {cfg['support_email']}"
+    return body
+
+def get_support_url() -> str:
+    return (load_whatsapp_config().get("support") or DEFAULT_WA_SUPPORT).get("url") or DEFAULT_WA_SUPPORT["url"]
+
+def get_warranty_body() -> str:
+    return (load_whatsapp_config().get("warranty") or DEFAULT_WA_WARRANTY).get("body") or DEFAULT_WA_WARRANTY["body"]
+
+def get_warranty_url() -> str:
+    return (load_whatsapp_config().get("warranty") or DEFAULT_WA_WARRANTY).get("url") or DEFAULT_WA_WARRANTY["url"]
+
+def get_loyalty_body() -> str:
+    return (load_whatsapp_config().get("loyalty") or DEFAULT_WA_LOYALTY).get("body") or DEFAULT_WA_LOYALTY["body"]
+
+def get_loyalty_url() -> str:
+    return (load_whatsapp_config().get("loyalty") or DEFAULT_WA_LOYALTY).get("url") or DEFAULT_WA_LOYALTY["url"]
+
+
+# ── CORE MESSAGE PROCESSOR ───────────────────────────────────
+def process_wa_message(phone: str, user_name: str, body: str):
+    cfg = load_whatsapp_config()
+    if not cfg.get("enabled", True):
+        # Bot switched off from the Settings tab — reply once, don't run the menu flow.
+        send_text_message(phone, "Thanks for reaching out — our WhatsApp assistant is "
+                                  "temporarily unavailable. Please try again later.")
+        return
+
+    sess = get_wa_session(phone)
+    body = body.strip()
+    low  = body.lower()
+    hist = sess.setdefault("history", [])
+    hist.append({"ts": datetime.now(timezone.utc).isoformat(), "text": body})
+
+    if low in ("hi", "hello", "hey", "start", "/start"):
+        sess["menu"] = "main"
+        sess["context"] = {}
+        send_text_message(phone, welcome_msg(user_name))
+        _send_main_menu(phone, sess)
+        return
+
+    if low in ("menu", "/menu", "0", "back", "home"):
+        sess["menu"] = "main"
+        sess["context"] = {}
+        _send_main_menu(phone, sess)
+        return
+
+    current_options = sess.get("options", [])
+    matched_key = None
+    for label, key in current_options:
+        if body == key:
+            matched_key = key
+            break
+    if matched_key is None:
+        for label, key in current_options:
+            if low == label.strip().lower():
+                matched_key = key
+                break
+
+    if matched_key is not None:
+        route_wa(phone, user_name, matched_key, sess)
+        return
+
+    # Anything that isn't a recognised menu tap goes back to the main menu.
+    send_text_message(phone, "Sorry, I didn't understand that. Here's the main menu:")
+    _send_main_menu(phone, sess)
+
+
+def route_wa(phone: str, user_name: str, key: str, sess: dict):
+    # -- Main menu -------------------------------------------------------
+    if key == "main":
+        sess["menu"] = "main"
+        sess["context"] = {}
+        _send_main_menu(phone, sess)
+
+    # -- Browse Products ---------------------------------------------------
+    elif key == "products":
+        options = get_product_cat_options()
+        sess["options"] = options
+        send_menu(phone, "Browse Products", "Choose a product category.",
+                  options, "Choose an option")
+
+    elif key.startswith("cat:"):
+        cat_key = key.split(":", 1)[1]
+        info = get_category_info().get(cat_key)
+        if info:
+            send_cta_buttons(phone, info.get("desc", ""), [
+                {"type": "URL", "title": info.get("button", "View"), "url": info.get("url", SIGMA_WEBSITE_URL)},
+            ])
+            sess["options"] = [("Categories", "products"), ("Main Menu", "main")]
+            send_back_menu(phone, [("Categories", "products")])
+        else:
+            _send_main_menu(phone, sess)
+
+    # -- Purchase ------------------------------------------------------------
+    elif key == "purchase":
+        options = get_purchase_state_options()
+        sess["options"] = options
+        send_menu(phone, "Purchase", "Select your state.",
+                  options, "Choose an option")
+
+    elif key.startswith("state:"):
+        state_key = key.split(":", 1)[1]
+        info = get_state_info().get(state_key)
+        if info:
+            body = (
+                f"{info.get('label', state_key)} Region\n\n"
+                f"For sales enquiries, pricing, dealer information and product "
+                f"availability, please contact the {info.get('team', 'SIGMA Sales Team')}."
+            )
+            send_cta_buttons(phone, body, [
+                {"type": "PHONE_NUMBER", "title": "Call Us", "phone": info.get("phone", "")},
+                {"type": "URL", "title": "Email Us", "url": f"mailto:{info.get('email', '')}"},
+            ])
+            sess["options"] = [("States", "purchase"), ("Main Menu", "main")]
+            send_back_menu(phone, [("States", "purchase")])
+        else:
+            _send_main_menu(phone, sess)
+
+    # -- Technical Support -----------------------------------------------------
+    elif key == "support":
+        send_cta_buttons(phone, get_support_body(), [
+            {"type": "URL", "title": "Locate Service Centre", "url": get_support_url()},
+        ])
+        sess["options"] = [("Main Menu", "main")]
+        send_back_menu(phone)
+
+    # -- Warranty Registration ---------------------------------------------------
+    elif key == "warranty":
+        send_cta_buttons(phone, get_warranty_body(), [
+            {"type": "URL", "title": "Register Now", "url": get_warranty_url()},
+        ])
+        sess["options"] = [("Main Menu", "main")]
+        send_back_menu(phone)
+
+    # -- Sigma Loyalty Program ---------------------------------------------------
+    elif key == "loyalty":
+        send_cta_buttons(phone, get_loyalty_body(), [
+            {"type": "URL", "title": "Join Now", "url": get_loyalty_url()},
+        ])
+        sess["options"] = [("Main Menu", "main")]
+        send_back_menu(phone)
+
+    # -- Fallback ------------------------------------------------------------------
+    else:
+        _send_main_menu(phone, sess)
+
+
+# ── TWILIO WEBHOOK — same app, same host:port as the website/admin ──
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp_webhook():
+    incoming_msg = request.values.get("Body", "").strip()
+    from_number  = request.values.get("From", "")
+    profile_name = request.values.get("ProfileName", "there")
+
+    wa_log.info(f"MSG from {from_number}: {incoming_msg!r}")
+
+    try:
+        process_wa_message(from_number, profile_name, incoming_msg)
+        save_wa_session_disk(from_number, profile_name)
+    except Exception as e:
+        wa_log.exception(f"Error processing message: {e}")
+        try:
+            send_text_message(from_number, "Something went wrong. Please send menu to restart.")
+        except Exception:
+            pass
+
+    return str(MessagingResponse()), 200, {"Content-Type": "text/xml"}
+
+
+@app.route("/health", methods=["GET"])
+def whatsapp_health():
+    return {"status": "ok", "bot": "Sigma WhatsApp Bot"}, 200
+
 
 # ══════════════════════════════════════════════════════════
 # CHATBOT ROUTES
@@ -1517,74 +1998,102 @@ def api_save_config():
     save_config(cfg)
     return jsonify({"ok": True, "message": "Configuration saved successfully"})
 
-# ── WhatsApp Config + Live Chat History (via Twilio) ──────
+# ── WhatsApp Bot Settings ───────────────────────────────────
 @app.route("/admin/api/whatsapp/config", methods=["GET"])
 def api_get_whatsapp_config():
     return jsonify(load_whatsapp_config())
 
 @app.route("/admin/api/whatsapp/config", methods=["POST"])
 def api_save_whatsapp_config():
-    data = request.get_json()
+    data = request.get_json() or {}
     cfg  = load_whatsapp_config()
     for k in DEFAULT_WHATSAPP_CONFIG:
         if k in data:
             cfg[k] = data[k]
     save_whatsapp_config(cfg)
-    return jsonify({"ok": True, "message": "WhatsApp configuration saved"})
+    return jsonify({"ok": True, "message": "WhatsApp settings saved successfully"})
 
-@app.route("/admin/api/whatsapp/sessions")
+
+def _wa_other_party(msg) -> str:
+    """The counterpart's WhatsApp address for a Twilio message
+    (whichever side of from_/to isn't our own Twilio number)."""
+    return msg.to if msg.from_ == TWILIO_WHATSAPP_FROM else msg.from_
+
+
+def _fetch_twilio_whatsapp_messages(limit: int = 500) -> list:
+    """Pulls both directions of WhatsApp traffic for our Twilio number."""
+    msgs = []
+    try:
+        msgs += list(twilio_client.messages.list(to=TWILIO_WHATSAPP_FROM, limit=limit))
+    except Exception as e:
+        wa_log.warning(f"Twilio inbound message fetch failed: {e}")
+        raise
+    try:
+        msgs += list(twilio_client.messages.list(from_=TWILIO_WHATSAPP_FROM, limit=limit))
+    except Exception as e:
+        wa_log.warning(f"Twilio outbound message fetch failed: {e}")
+        raise
+    return msgs
+
+@app.route("/admin/api/whatsapp/sessions", methods=["GET"])
 def api_whatsapp_sessions():
-    """
-    Live summary list for the table — phone, name (best-effort), counts,
-    timestamps — sourced directly from Twilio's Message log, not any
-    local file.
-    """
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({
-            "error": "twilio_not_configured",
-            "message": "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and "
-                       "TWILIO_WHATSAPP_FROM as environment variables to "
-                       "view live WhatsApp chat history."
-        }), 400
+    try:
+        messages = _fetch_twilio_whatsapp_messages()
+    except Exception as e:
+        return jsonify({"message": f"Could not load WhatsApp chat history from Twilio: {e}"}), 502
 
-    sessions = fetch_whatsapp_conversations()
-    if sessions is None:
-        return jsonify({
-            "error": "twilio_fetch_failed",
-            "message": "Could not reach Twilio. Check your credentials and network connection."
-        }), 502
-    return jsonify(sessions)
+    disk_sessions = {s.get("phone"): s for s in _load_wa_sessions_disk()}
 
-@app.route("/admin/api/whatsapp/sessions/detail")
+    grouped: dict = {}
+    for m in messages:
+        phone = _wa_other_party(m)
+        if not phone:
+            continue
+        grouped.setdefault(phone, []).append(m)
+
+    out = []
+    for phone, msgs in grouped.items():
+        msgs.sort(key=lambda m: m.date_created or datetime.min.replace(tzinfo=timezone.utc))
+        last = msgs[-1]
+        out.append({
+            "phone":          phone,
+            "name":           (disk_sessions.get(phone) or {}).get("name", ""),
+            "message_count":  len(msgs),
+            "last_message":   last.body or "",
+            "updated_at":     (last.date_created or datetime.now(timezone.utc)).isoformat(),
+        })
+    return jsonify(out)
+
+@app.route("/admin/api/whatsapp/sessions/detail", methods=["GET"])
 def api_whatsapp_session_detail():
     phone = request.args.get("phone", "")
     if not phone:
-        return jsonify({"error": "phone is required"}), 400
+        return jsonify({"message": "Missing phone parameter"}), 400
 
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({
-            "error": "twilio_not_configured",
-            "message": "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and "
-                       "TWILIO_WHATSAPP_FROM as environment variables to "
-                       "view live WhatsApp chat history."
-        }), 400
+    try:
+        messages = _fetch_twilio_whatsapp_messages()
+    except Exception as e:
+        return jsonify({"message": f"Could not load this chat from Twilio: {e}"}), 502
 
-    messages = fetch_whatsapp_conversation_detail(phone)
-    if messages is None:
-        return jsonify({
-            "error": "twilio_fetch_failed",
-            "message": "Could not reach Twilio. Check your credentials and network connection."
-        }), 502
+    msgs = [m for m in messages if _wa_other_party(m) == phone]
+    msgs.sort(key=lambda m: m.date_created or datetime.min.replace(tzinfo=timezone.utc))
 
-    names = _whatsapp_name_lookup()
+    disk_sessions = {s.get("phone"): s for s in _load_wa_sessions_disk()}
+    name = (disk_sessions.get(phone) or {}).get("name", "")
+
     return jsonify({
-        "phone":    phone,
-        "name":     names.get(phone, ""),
-        "messages": messages,
+        "name": name,
+        "messages": [
+            {
+                "direction": "user" if m.from_ != TWILIO_WHATSAPP_FROM else "bot",
+                "body":      m.body or "",
+                "date":      (m.date_created or datetime.now(timezone.utc)).isoformat(),
+            }
+            for m in msgs
+        ],
     })
 
 # ── Conversations ────────────────────────────────────────
-
 @app.route("/admin/api/conversations")
 def api_conversations():
     convs      = load_conversations()
@@ -1766,8 +2275,15 @@ if __name__ == "__main__":
     print("=" * 56)
     print("  Sigma AI Assistant  →  http://localhost:5000")
     print("  Admin Panel         →  http://localhost:5000/admin")
+    print("  WhatsApp Webhook    →  POST http://localhost:5000/whatsapp")
+    print("  WhatsApp Health     →  GET  http://localhost:5000/health")
     print("=" * 56)
     if not ANTHROPIC_API_KEY:
         print("  ⚠  No ANTHROPIC_API_KEY — fallback mode")
+    if TWILIO_ACCOUNT_SID == "YOUR_ACCOUNT_SID" or TWILIO_AUTH_TOKEN == "YOUR_AUTH_TOKEN":
+        print("  ⚠  No TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN set — WhatsApp bot")
+        print("     will not be able to send messages until these are configured")
+        print("     (env vars or .env). Point one ngrok/public URL's /whatsapp")
+        print("     path at this same port as your Twilio Sandbox webhook.")
     print("=" * 56)
     app.run(host="0.0.0.0", port=5000)

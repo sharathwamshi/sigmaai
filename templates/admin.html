@@ -314,6 +314,9 @@ tr:hover td{background:var(--bg2)}
     <button class="nav-item" onclick="showPanel('chatbot',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Bot Config
     </button>
+    <button class="nav-item" onclick="showPanel('whatsapp',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l1.65-4.95A9 9 0 1112 21a8.96 8.96 0 01-4.5-1.2z"/><path d="M8.5 10.5c0 3 2.5 5.5 5.5 5.5"/></svg>WhatsApp
+    </button>
     <button class="nav-item" onclick="showPanel('offers',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Offers & Messaging
     </button>
@@ -362,6 +365,7 @@ tr:hover td{background:var(--bg2)}
           <button class="btn btn-black" onclick="showPanel('products',null)">Manage Products</button>
           <button class="btn btn-outline" onclick="showPanel('dealers',null)">Dealer Network</button>
           <button class="btn btn-outline" onclick="showPanel('chatbot',null)">Bot Config</button>
+          <button class="btn btn-outline" onclick="showPanel('whatsapp',null)">WhatsApp</button>
           <button class="btn btn-outline" onclick="showPanel('offers',null)">Set Offers</button>
           <button class="btn btn-outline" onclick="showPanel('conversations',null)">Conversations</button>
           <button class="btn btn-outline" onclick="showPanel('leads',null)">View Leads</button>
@@ -580,6 +584,303 @@ tr:hover td{background:var(--bg2)}
           <div style="margin-top:20px;display:flex;justify-content:flex-end">
             <button class="btn btn-black" onclick="saveConfig()">💾 Save All Configuration</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ WHATSAPP ════════════════════════════════════════ -->
+    <div class="panel" id="panel-whatsapp">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📱 WhatsApp Bot — Basic Settings</div>
+          <button class="btn btn-black btn-sm" onclick="saveWhatsappConfig()">💾 Save Settings</button>
+        </div>
+        <div class="card-body">
+          <div class="toggle-row" style="padding-top:0">
+            <div>
+              <div class="toggle-label">WhatsApp Bot Enabled</div>
+              <div class="toggle-sub">Turn the WhatsApp assistant on or off</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="wa-enabled"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+
+          <div class="form-row" style="margin-top:14px">
+            <div class="field">
+              <label>Brand Name (shown in WhatsApp)</label>
+              <input type="text" id="wa-brand-name" placeholder="Sigma AI Assistant"/>
+            </div>
+            <div class="field">
+              <label>Footer Text / Website</label>
+              <input type="text" id="wa-footer-text" placeholder="sigmaindia.in"/>
+            </div>
+          </div>
+
+          <div class="form-row one">
+            <div class="field">
+              <label>Welcome Message <span style="color:var(--text4);font-weight:400">(use {name} for the customer's name)</span></label>
+              <textarea id="wa-welcome-message" rows="3" placeholder="Welcome, {name}. I am the Sigma AI Assistant…"></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label>Business Hours</label>
+              <input type="text" id="wa-business-hours" placeholder="Monday to Saturday, 9 AM to 6 PM IST"/>
+            </div>
+            <div class="field">
+              <label>Support Email</label>
+              <input type="email" id="wa-support-email" placeholder="info@sigmaindia.in"/>
+            </div>
+          </div>
+
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-top:4px">
+            <div style="font-size:11px;font-weight:600;color:var(--text4);margin-bottom:4px">NOTE</div>
+            <div style="font-size:12.5px;color:var(--text2);line-height:1.6">
+              These values are saved to <strong>data/whatsapp_config.json</strong>. Twilio credentials (Account SID, Auth Token, WhatsApp number) are configured separately via environment variables — the same <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, and <code>TWILIO_WHATSAPP_FROM</code> used by the bot script — and are not editable here for security. They also power the live chat history below.
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-black" onclick="saveWhatsappConfig()">💾 Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ WHATSAPP MENU FLOW (matches whatsapp_bot.py exactly) ══ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧭 WhatsApp Menu Flow</div>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12.5px;color:var(--text2);line-height:1.6">
+            This is the exact flow the bot sends as one tap-to-select list message. The 5 options, their order, and the screens
+            behind them are final and cannot be reordered here — only the text, links, and contact details each screen shows are editable below.
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+            <span class="topbar-badge">1. Browse Products</span>
+            <span class="topbar-badge">2. Purchase</span>
+            <span class="topbar-badge">3. Technical Support</span>
+            <span class="topbar-badge">4. Warranty Registration</span>
+            <span class="topbar-badge">5. Sigma Loyalty Program</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🛍️ Step 1 · Browse Products — Categories</div>
+          <button class="btn btn-black btn-sm" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12.5px;color:var(--text3);margin-bottom:4px">
+            Tapping "Browse Products" shows these 5 categories as a list; tapping a category sends its description with a single link button. Menu Label is capped at 24 characters (WhatsApp list-row limit).
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Lenses</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="cat-lenses-label" maxlength="24"/></div>
+              <div class="field"><label>Button Text</label><input type="text" id="cat-lenses-button"/></div>
+            </div>
+            <div class="form-row one"><div class="field"><label>Description</label><textarea id="cat-lenses-desc" rows="2"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="cat-lenses-url" placeholder="https://sigmaindia.in/lenses"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Cine Lenses</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="cat-cine-label" maxlength="24"/></div>
+              <div class="field"><label>Button Text</label><input type="text" id="cat-cine-button"/></div>
+            </div>
+            <div class="form-row one"><div class="field"><label>Description</label><textarea id="cat-cine-desc" rows="2"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="cat-cine-url" placeholder="https://sigmaindia.in/cine-lenses"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Cameras</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="cat-cameras-label" maxlength="24"/></div>
+              <div class="field"><label>Button Text</label><input type="text" id="cat-cameras-button"/></div>
+            </div>
+            <div class="form-row one"><div class="field"><label>Description</label><textarea id="cat-cameras-desc" rows="2"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="cat-cameras-url" placeholder="https://sigmaindia.in/cameras"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Accessories</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="cat-accessories-label" maxlength="24"/></div>
+              <div class="field"><label>Button Text</label><input type="text" id="cat-accessories-button"/></div>
+            </div>
+            <div class="form-row one"><div class="field"><label>Description</label><textarea id="cat-accessories-desc" rows="2"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="cat-accessories-url" placeholder="https://sigmaindia.in/accessories"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Discontinued Models</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="cat-discontinued-label" maxlength="24"/></div>
+              <div class="field"><label>Button Text</label><input type="text" id="cat-discontinued-button"/></div>
+            </div>
+            <div class="form-row one"><div class="field"><label>Description</label><textarea id="cat-discontinued-desc" rows="2"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="cat-discontinued-url" placeholder="https://sigmaindia.in/discontinued-models"/></div></div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-black" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧾 Step 2 · Purchase — State / Region Contacts</div>
+          <button class="btn btn-black btn-sm" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12.5px;color:var(--text3);margin-bottom:4px">
+            Tapping "Purchase" shows these 6 states as a list; tapping a state sends its sales-team contact card with a "Call Us" and "Email Us" button.
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Tamil Nadu</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-tn-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-tn-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-tn-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-tn-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Karnataka</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-ka-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-ka-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-ka-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-ka-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Kerala</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-kl-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-kl-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-kl-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-kl-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Maharashtra</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-mh-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-mh-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-mh-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-mh-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Delhi</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-dl-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-dl-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-dl-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-dl-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Other</div>
+            <div class="form-row">
+              <div class="field"><label>Menu Label</label><input type="text" id="state-other-label" maxlength="24"/></div>
+              <div class="field"><label>Sales Team Name</label><input type="text" id="state-other-team"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Phone (Call Us)</label><input type="text" id="state-other-phone" placeholder="+91 90000 00000"/></div>
+              <div class="field"><label>Email (Email Us)</label><input type="email" id="state-other-email" placeholder="team@sigmaindia.in"/></div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-black" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🛠️ Steps 3–5 · Support, Warranty &amp; Loyalty Screens</div>
+          <button class="btn btn-black btn-sm" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12.5px;color:var(--text3);margin-bottom:4px">
+            Each of these sends the message body below with a single link button, followed by a "Main Menu" quick-reply.
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Technical Support — "Locate Service Centre"</div>
+            <div class="form-row one"><div class="field"><label>Message Body</label><textarea id="support-body" rows="3"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="support-url" placeholder="https://sigmaindia.in/service-centre-locator"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Warranty Registration — "Register Now"</div>
+            <div class="form-row one"><div class="field"><label>Message Body</label><textarea id="warranty-body" rows="3"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="warranty-url" placeholder="https://sigmaindia.in/warranty-registration"/></div></div>
+          </div>
+
+          <div style="padding:14px 0;border-top:1px solid var(--border)">
+            <div style="font-weight:700;font-size:12.5px;margin-bottom:8px">Sigma Loyalty Program — "Join Now"</div>
+            <div class="form-row one"><div class="field"><label>Message Body</label><textarea id="loyalty-body" rows="3"></textarea></div></div>
+            <div class="form-row one"><div class="field"><label>Link URL</label><input type="text" id="loyalty-url" placeholder="https://sigmaindia.in/loyalty"/></div></div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-black" onclick="saveWhatsappConfig()">💾 Save Flow Content</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💬 WhatsApp Chat History <span class="topbar-badge" id="wa-count-badge">0</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:11px;color:var(--text4)">Live from Twilio</span>
+            <button class="btn btn-outline btn-sm" onclick="loadWhatsappSessions()">↻ Refresh</button>
+          </div>
+        </div>
+        <div id="wa-status-banner" style="display:none;padding:12px 16px;background:var(--amber-bg);border-bottom:1px solid var(--amber-b);color:var(--amber);font-size:12.5px"></div>
+        <div class="tbl-controls">
+          <input class="search-input" id="wa-search" placeholder="Search by phone number, name, or message…" oninput="filterWhatsappSessions()"/>
+          <select id="wa-sort" class="search-input" style="width:auto;padding:5px 10px;font-size:12px" onchange="filterWhatsappSessions()">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest First</option>
+            <option value="most_msgs">Most Messages</option>
+            <option value="name_az">Name A–Z</option>
+            <option value="phone_az">Phone Number A–Z</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th>Phone Number</th><th>Name</th><th>Messages</th>
+            <th>Last Message</th><th>Last Activity</th>
+            <th style="width:80px">Actions</th>
+          </tr></thead>
+          <tbody id="wa-tbody"></tbody></table>
         </div>
       </div>
     </div>
@@ -837,6 +1138,20 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
+<!-- ── WHATSAPP SESSION DETAIL MODAL ──────────────────── -->
+<div class="modal-overlay" id="wa-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div class="modal-title" id="wa-modal-title">WhatsApp Chat</div>
+      <button class="modal-close" onclick="closeModal('wa-modal')">×</button>
+    </div>
+    <div class="modal-body" id="wa-modal-body" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('wa-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── EDIT PRICE MODAL ───────────────────────────── -->
 <div class="modal-overlay" id="edit-price-modal">
   <div class="modal modal-sm">
@@ -933,6 +1248,7 @@ tr:hover td{background:var(--bg2)}
 
 let ALL_PRODUCTS = [], ALL_DEALERS = [], ALL_CONVS = [], CONFIG = {};
 let EDIT_PROD = {}, EDIT_DEALER = {};
+let ALL_WA_SESSIONS = [];
 
 // ── TOAST ─────────────────────────────────────────────
 function toast(msg, type='success'){
@@ -948,6 +1264,7 @@ const PANEL_META = {
   images:        {title:'Product Images', badge:'Upload'},
   dealers:       {title:'Dealer Network', badge:'1215+ Dealers'},
   chatbot:       {title:'Bot Config',     badge:'AI Settings'},
+  whatsapp:      {title:'WhatsApp',       badge:'Bot & Chats'},
   offers:        {title:'Offers & Messaging', badge:'Messaging'},
   conversations: {title:'Conversations',  badge:'History'},
   leads:         {title:'User Leads',     badge:'Contacts'},
@@ -968,6 +1285,7 @@ function showPanel(id, btn){
     chatbot: loadConfigForm, conversations: loadConversations,
     offers: loadOffersForm, leads: loadLeads,
     prices: loadPrices, servicecenters: loadServiceCenters,
+    whatsapp: loadWhatsappPanel,
   };
   if(loaders[id]) loaders[id]();
 }
@@ -1355,6 +1673,218 @@ async function saveConfig(){
   else toast(d.message,'error');
 }
 
+// ── WHATSAPP ──────────────────────────────────────────
+async function loadWhatsappPanel(){
+  await loadWhatsappConfig();
+  await loadWhatsappSessions();
+}
+
+const WA_CATEGORY_KEYS = ['lenses','cine','cameras','accessories','discontinued'];
+const WA_STATE_KEYS    = ['tn','ka','kl','mh','dl','other'];
+
+async function loadWhatsappConfig(){
+  const r = await fetch('/admin/api/whatsapp/config');
+  const cfg = await r.json();
+  document.getElementById('wa-enabled').checked        = !!cfg.enabled;
+  document.getElementById('wa-brand-name').value        = cfg.brand_name || '';
+  document.getElementById('wa-footer-text').value       = cfg.footer_text || '';
+  document.getElementById('wa-welcome-message').value   = cfg.welcome_message || '';
+  document.getElementById('wa-business-hours').value    = cfg.business_hours || '';
+  document.getElementById('wa-support-email').value     = cfg.support_email || '';
+
+  // -- Menu flow content (Browse Products categories) --
+  const categories = cfg.categories || {};
+  WA_CATEGORY_KEYS.forEach(k=>{
+    const c = categories[k] || {};
+    setVal(`cat-${k}-label`,  c.label);
+    setVal(`cat-${k}-desc`,   c.desc);
+    setVal(`cat-${k}-button`, c.button);
+    setVal(`cat-${k}-url`,    c.url);
+  });
+
+  // -- Menu flow content (Purchase state contacts) --
+  const states = cfg.states || {};
+  WA_STATE_KEYS.forEach(k=>{
+    const s = states[k] || {};
+    setVal(`state-${k}-label`, s.label);
+    setVal(`state-${k}-team`,  s.team);
+    setVal(`state-${k}-phone`, s.phone);
+    setVal(`state-${k}-email`, s.email);
+  });
+
+  // -- Support / Warranty / Loyalty screens --
+  setVal('support-body',  (cfg.support  || {}).body);
+  setVal('support-url',   (cfg.support  || {}).url);
+  setVal('warranty-body', (cfg.warranty || {}).body);
+  setVal('warranty-url',  (cfg.warranty || {}).url);
+  setVal('loyalty-body',  (cfg.loyalty  || {}).body);
+  setVal('loyalty-url',   (cfg.loyalty  || {}).url);
+}
+
+function setVal(id, val){
+  const el = document.getElementById(id);
+  if(el) el.value = val || '';
+}
+
+async function saveWhatsappConfig(){
+  const categories = {};
+  WA_CATEGORY_KEYS.forEach(k=>{
+    categories[k] = {
+      label:  document.getElementById(`cat-${k}-label`).value,
+      desc:   document.getElementById(`cat-${k}-desc`).value,
+      button: document.getElementById(`cat-${k}-button`).value,
+      url:    document.getElementById(`cat-${k}-url`).value,
+    };
+  });
+
+  const states = {};
+  WA_STATE_KEYS.forEach(k=>{
+    states[k] = {
+      label: document.getElementById(`state-${k}-label`).value,
+      team:  document.getElementById(`state-${k}-team`).value,
+      phone: document.getElementById(`state-${k}-phone`).value,
+      email: document.getElementById(`state-${k}-email`).value,
+    };
+  });
+
+  const data = {
+    enabled:          document.getElementById('wa-enabled').checked,
+    brand_name:       document.getElementById('wa-brand-name').value,
+    footer_text:      document.getElementById('wa-footer-text').value,
+    welcome_message:  document.getElementById('wa-welcome-message').value,
+    business_hours:   document.getElementById('wa-business-hours').value,
+    support_email:    document.getElementById('wa-support-email').value,
+    categories: categories,
+    states: states,
+    support:  { body: document.getElementById('support-body').value,  url: document.getElementById('support-url').value },
+    warranty: { body: document.getElementById('warranty-body').value, url: document.getElementById('warranty-url').value },
+    loyalty:  { body: document.getElementById('loyalty-body').value,  url: document.getElementById('loyalty-url').value },
+  };
+  const r = await fetch('/admin/api/whatsapp/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d = await r.json();
+  if(d.ok) toast('WhatsApp settings saved ✓','success');
+  else toast(d.message,'error');
+}
+
+function showWaBanner(msg){
+  const b = document.getElementById('wa-status-banner');
+  if(!msg){ b.style.display='none'; b.textContent=''; return; }
+  b.style.display='block'; b.textContent=msg;
+}
+
+async function loadWhatsappSessions(){
+  const tb = document.getElementById('wa-tbody');
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text4)">Loading live chat history from Twilio…</td></tr>';
+  showWaBanner('');
+
+  let r, d;
+  try{
+    r = await fetch('/admin/api/whatsapp/sessions');
+    d = await r.json();
+  }catch(e){
+    showWaBanner('Could not reach the server to load WhatsApp history.');
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text4)">Failed to load</td></tr>';
+    return;
+  }
+
+  if(!r.ok){
+    ALL_WA_SESSIONS = [];
+    document.getElementById('wa-count-badge').textContent = '0 chats';
+    showWaBanner(d.message || 'Could not load WhatsApp chat history from Twilio.');
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text4)">No data available</td></tr>';
+    return;
+  }
+
+  ALL_WA_SESSIONS = d;
+  document.getElementById('wa-count-badge').textContent = ALL_WA_SESSIONS.length+' chats';
+  filterWhatsappSessions();
+}
+
+function filterWhatsappSessions(){
+  const q    = (document.getElementById('wa-search').value||'').toLowerCase();
+  const sort = document.getElementById('wa-sort').value;
+
+  let data = ALL_WA_SESSIONS.filter(s=>{
+    const phone = (s.phone||'').toLowerCase();
+    const name  = (s.name||'').toLowerCase();
+    const last  = (s.last_message||'').toLowerCase();
+    return !q || phone.includes(q) || name.includes(q) || last.includes(q);
+  });
+
+  data = data.slice().sort((a,b)=>{
+    switch(sort){
+      case 'oldest':    return (a.updated_at||'').localeCompare(b.updated_at||'');
+      case 'most_msgs': return (b.message_count||0)-(a.message_count||0);
+      case 'name_az':   return (a.name||'').localeCompare(b.name||'');
+      case 'phone_az':  return (a.phone||'').localeCompare(b.phone||'');
+      default:          return (b.updated_at||'').localeCompare(a.updated_at||''); // recent
+    }
+  });
+
+  renderWhatsappTable(data);
+}
+
+function renderWhatsappTable(data){
+  const tb = document.getElementById('wa-tbody');
+  if(!data.length){
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text4)">No WhatsApp chats found</td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map(s=>{
+    const phoneClean = (s.phone||'').replace('whatsapp:','');
+    return `<tr>
+    <td style="font-family:var(--mono);font-weight:700;color:var(--text1)">${esc(phoneClean)}</td>
+    <td style="font-weight:600">${esc(s.name||'—')}</td>
+    <td>${s.message_count||0}</td>
+    <td style="max-width:220px" title="${esc(s.last_message||'')}">${esc(s.last_message||'—')}</td>
+    <td style="color:var(--text3)">${fmtDateTime(s.updated_at)}</td>
+    <td><button class="btn btn-outline btn-sm" onclick="openWhatsappDetail('${esc(s.phone)}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function openWhatsappDetail(phone){
+  const phoneClean = (phone||'').replace('whatsapp:','');
+  document.getElementById('wa-modal-title').textContent = `Loading ${phoneClean}…`;
+  const body = document.getElementById('wa-modal-body');
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text4)">Fetching from Twilio…</div>';
+  openModal('wa-modal');
+
+  let r, d;
+  try{
+    r = await fetch('/admin/api/whatsapp/sessions/detail?phone='+encodeURIComponent(phone));
+    d = await r.json();
+  }catch(e){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text4)">Failed to load this chat.</div>';
+    return;
+  }
+
+  if(!r.ok){
+    document.getElementById('wa-modal-title').textContent = phoneClean;
+    body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text4)">${esc(d.message||'Could not load this chat.')}</div>`;
+    return;
+  }
+
+  const msgs = d.messages || [];
+  document.getElementById('wa-modal-title').textContent =
+    `${d.name ? d.name+' · ' : ''}${phoneClean} · ${msgs.length} messages`;
+
+  if(!msgs.length){
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text4)">No message history found for this number</div>';
+  }else{
+    body.innerHTML = msgs.map(m=>{
+      const bubbleClass = m.direction === 'user' ? 'user' : 'assistant';
+      const roleLabel    = m.direction === 'user' ? phoneClean : 'Sigma Bot';
+      return `
+      <div style="margin-bottom:6px">
+        <div class="msg-role">${esc(roleLabel)} · ${fmtDateTime(m.date)}</div>
+        <div class="msg-bbl ${bubbleClass}">${esc(m.body || '(no text)')}</div>
+      </div>`;
+    }).join('');
+  }
+  body.scrollTop = body.scrollHeight;
+}
+
 // ── OFFERS ────────────────────────────────────────────
 async function loadOffersForm(){
   const r=await fetch('/admin/api/config');
@@ -1716,4 +2246,4 @@ checkAdminAuth()
 
 </script>
 </body>
-</html>
+</html>

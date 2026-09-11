@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "brand_name": "Sigma AI Assistant",
+  "welcome_message": "Welcome, {name}. I am  Sigma AI Assistant, your guide for everything related to Sigma in India.",
+  "footer_text": "sigmaindia.in",
+  "business_hours": "Monday to Saturday, 9 AM to 6 PM IST",
+  "support_email": "info@sigmaindia.in",
+  "updated_at": "2026-07-10T09:47:15.747733"
+}
